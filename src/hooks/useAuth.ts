@@ -6,25 +6,32 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import { saveSession, clearSession, getStoredUser, isAuthenticated } from "@/lib/auth";
 import type { User, LoginPayload, RegisterPayload } from "@/types";
 
+// Mock user for UI development — replaced with real auth when backend is live.
+const DEV_USER: User = {
+  id: "dev",
+  name: "Alex Johnson",
+  email: "alex@example.com",
+  createdAt: new Date().toISOString(),
+};
+
 export function useAuth() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(DEV_USER);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const stored = getStoredUser();
-    setUser(stored);
+    setUser(stored ?? DEV_USER);
     setLoading(false);
   }, []);
 
   const login = useCallback(
     async (payload: LoginPayload): Promise<void> => {
-      const { data } = await api.post<{ accessToken: string; user: User }>(
-        "/auth/login",
-        payload
-      );
-      saveSession({ accessToken: data.accessToken }, data.user);
-      setUser(data.user);
+      // TODO: replace with real API call when backend is live
+      // const { data } = await api.post<{ accessToken: string; user: User }>("/auth/login", payload);
+      const mockUser: User = { ...DEV_USER, email: payload.email };
+      saveSession({ accessToken: "dev-token" }, mockUser);
+      setUser(mockUser);
       router.push("/dashboard");
     },
     [router]
@@ -32,12 +39,11 @@ export function useAuth() {
 
   const register = useCallback(
     async (payload: Omit<RegisterPayload, "confirmPassword">): Promise<void> => {
-      const { data } = await api.post<{ accessToken: string; user: User }>(
-        "/auth/register",
-        payload
-      );
-      saveSession({ accessToken: data.accessToken }, data.user);
-      setUser(data.user);
+      // TODO: replace with real API call when backend is live
+      // const { data } = await api.post<{ accessToken: string; user: User }>("/auth/register", payload);
+      const mockUser: User = { ...DEV_USER, name: payload.name, email: payload.email };
+      saveSession({ accessToken: "dev-token" }, mockUser);
+      setUser(mockUser);
       router.push("/dashboard");
     },
     [router]

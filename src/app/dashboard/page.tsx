@@ -1,8 +1,57 @@
-import type { Metadata } from "next";
-import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
+"use client";
 
-export const metadata: Metadata = { title: "Dashboard" };
+import { useMemo } from "react";
+import { useApplicationStore } from "@/hooks/useApplicationStore";
+import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
+import type { DashboardSummary } from "@/types";
 
 export default function DashboardPage() {
-  return <DashboardOverview />;
+  const { applications, getReminders, getInterviews, getEvents } = useApplicationStore();
+
+  const summary = useMemo<DashboardSummary>(() => {
+    const byStatus: Record<string, number> = {};
+    let activeApplications = 0;
+    let offerCount = 0;
+    let rejectionCount = 0;
+
+    const inactiveStatuses = new Set(["Rejected", "Withdrawn", "Offer", "Saved"]);
+
+    applications.forEach((a) => {
+      byStatus[a.status] = (byStatus[a.status] ?? 0) + 1;
+      if (a.status === "Offer") offerCount++;
+      if (a.status === "Rejected") rejectionCount++;
+      if (!inactiveStatuses.has(a.status)) activeApplications++;
+    });
+
+    const now = new Date();
+    const upcomingReminders = getReminders()
+      .filter((r) => !r.completed && new Date(r.dueDate) >= now)
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .slice(0, 5);
+
+    const upcomingInterviews = getInterviews()
+      .filter((iv) => iv.scheduledAt && new Date(iv.scheduledAt) >= now)
+      .sort((a, b) =>
+        new Date(a.scheduledAt!).getTime() - new Date(b.scheduledAt!).getTime()
+      )
+      .slice(0, 5);
+
+    const allEvents = applications.flatMap((a) => getEvents(a.id));
+    const recentEvents = allEvents
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5);
+
+    return {
+      totalApplications: applications.length,
+      activeApplications,
+      offerCount,
+      rejectionCount,
+      byStatus,
+      upcomingReminders,
+      upcomingInterviews,
+      recentEvents,
+    };
+  }, [applications, getReminders, getInterviews, getEvents]);
+
+  return <DashboardOverview summary={summary} />;
 }

@@ -1,57 +1,48 @@
 @import "tailwindcss";
 
-/* ─── Design Tokens ──────────────────────────────────────────────────────── */
+/* ─── Light Mode Tokens ──────────────────────────────────────────────────── */
 
 :root {
-  /* Core backgrounds */
   --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
+  --foreground: 224 71% 4%;
 
-  /* Surface layers */
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+  --card-foreground: 224 71% 4%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
+  --popover-foreground: 224 71% 4%;
 
-  /* Primary — professional indigo */
   --primary: 243 75% 59%;
   --primary-foreground: 0 0% 100%;
 
-  /* Secondary — neutral slate */
-  --secondary: 215 20% 95%;
-  --secondary-foreground: 222 47% 11%;
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 220 9% 35%;
 
-  /* Muted — soft backgrounds */
-  --muted: 214 32% 97%;
-  --muted-foreground: 215 16% 47%;
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 9% 46%;
 
-  /* Accent */
-  --accent: 214 32% 94%;
-  --accent-foreground: 222 47% 11%;
+  --accent: 220 14% 95%;
+  --accent-foreground: 224 71% 4%;
 
-  /* Destructive */
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
 
-  /* Border & Input */
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
   --ring: 243 75% 59%;
 
-  /* Radius */
   --radius: 0.5rem;
 
-  /* Sidebar */
-  --sidebar: 222 47% 11%;
-  --sidebar-foreground: 215 20% 85%;
-  --sidebar-muted: 215 20% 65%;
-  --sidebar-border: 222 40% 18%;
-  --sidebar-accent: 222 40% 18%;
+  /* Sidebar — dark in both modes */
+  --sidebar: 222 47% 9%;
+  --sidebar-foreground: 215 25% 75%;
+  --sidebar-muted: 215 15% 50%;
+  --sidebar-border: 222 40% 14%;
+  --sidebar-accent: 222 40% 16%;
   --sidebar-accent-foreground: 0 0% 100%;
   --sidebar-primary: 243 75% 65%;
 
-  /* Status colors */
-  --status-saved: 215 16% 47%;
+  /* Status palette */
+  --status-saved: 220 9% 46%;
   --status-applied: 217 91% 60%;
   --status-screening: 262 83% 58%;
   --status-interview: 38 92% 50%;
@@ -59,46 +50,48 @@
   --status-final: 173 80% 40%;
   --status-offer: 142 71% 45%;
   --status-rejected: 0 72% 51%;
-  --status-withdrawn: 215 16% 65%;
+  --status-withdrawn: 220 9% 60%;
 }
 
-.dark {
-  --background: 222 47% 6%;
-  --foreground: 210 40% 94%;
+/* ─── Dark Mode Tokens ───────────────────────────────────────────────────── */
 
-  --card: 222 47% 9%;
-  --card-foreground: 210 40% 94%;
-  --popover: 222 47% 9%;
-  --popover-foreground: 210 40% 94%;
+.dark {
+  --background: 224 71% 4%;
+  --foreground: 213 31% 91%;
+
+  --card: 222 47% 7%;
+  --card-foreground: 213 31% 91%;
+  --popover: 222 47% 7%;
+  --popover-foreground: 213 31% 91%;
 
   --primary: 243 75% 65%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 217 33% 15%;
-  --secondary-foreground: 210 40% 94%;
+  --secondary: 222 47% 12%;
+  --secondary-foreground: 213 31% 75%;
 
-  --muted: 217 33% 13%;
-  --muted-foreground: 215 20% 55%;
+  --muted: 222 47% 11%;
+  --muted-foreground: 215 20% 50%;
 
-  --accent: 217 33% 15%;
-  --accent-foreground: 210 40% 94%;
+  --accent: 222 47% 13%;
+  --accent-foreground: 213 31% 91%;
 
   --destructive: 0 62% 50%;
   --destructive-foreground: 0 0% 100%;
 
-  --border: 217 33% 17%;
-  --input: 217 33% 17%;
+  --border: 222 47% 13%;
+  --input: 222 47% 13%;
   --ring: 243 75% 65%;
 
-  --sidebar: 222 47% 4%;
-  --sidebar-foreground: 215 20% 75%;
-  --sidebar-muted: 215 20% 50%;
-  --sidebar-border: 222 40% 11%;
-  --sidebar-accent: 222 40% 12%;
-  --sidebar-accent-foreground: 210 40% 94%;
+  --sidebar: 222 47% 3%;
+  --sidebar-foreground: 215 25% 65%;
+  --sidebar-muted: 215 15% 40%;
+  --sidebar-border: 222 40% 9%;
+  --sidebar-accent: 222 40% 11%;
+  --sidebar-accent-foreground: 213 31% 91%;
   --sidebar-primary: 243 75% 65%;
 
-  --status-saved: 215 16% 55%;
+  --status-saved: 220 9% 55%;
   --status-applied: 217 91% 65%;
   --status-screening: 262 83% 65%;
   --status-interview: 38 92% 55%;
@@ -106,7 +99,7 @@
   --status-final: 173 80% 45%;
   --status-offer: 142 71% 50%;
   --status-rejected: 0 72% 58%;
-  --status-withdrawn: 215 16% 50%;
+  --status-withdrawn: 220 9% 45%;
 }
 
 /* ─── Tailwind v4 Theme ──────────────────────────────────────────────────── */
@@ -138,55 +131,56 @@
   --color-sidebar-accent: hsl(var(--sidebar-accent));
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-primary: hsl(var(--sidebar-primary));
-  --color-status-saved: hsl(var(--status-saved));
-  --color-status-applied: hsl(var(--status-applied));
-  --color-status-screening: hsl(var(--status-screening));
-  --color-status-interview: hsl(var(--status-interview));
-  --color-status-assessment: hsl(var(--status-assessment));
-  --color-status-final: hsl(var(--status-final));
-  --color-status-offer: hsl(var(--status-offer));
-  --color-status-rejected: hsl(var(--status-rejected));
-  --color-status-withdrawn: hsl(var(--status-withdrawn));
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 6px);
 }
 
-/* ─── Base Styles ────────────────────────────────────────────────────────── */
+/* ─── Base ───────────────────────────────────────────────────────────────── */
 
-* {
+*, *::before, *::after {
   border-color: hsl(var(--border));
+  box-sizing: border-box;
 }
 
-html {
+html, body {
   height: 100%;
 }
 
 body {
-  height: 100%;
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+/* ─── Focus ring ─────────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
 }
 
 /* ─── Scrollbar ──────────────────────────────────────────────────────────── */
 
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: hsl(var(--border));
-  border-radius: 3px;
+  border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+  background: hsl(var(--muted-foreground) / 0.4);
+}
+
+/* ─── Selection ──────────────────────────────────────────────────────────── */
+
+::selection {
+  background: hsl(var(--primary) / 0.15);
+  color: hsl(var(--foreground));
 }
