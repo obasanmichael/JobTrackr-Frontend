@@ -1,26 +1,192 @@
 @import "tailwindcss";
 
+/* ─── Design Tokens ──────────────────────────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Core backgrounds */
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+
+  /* Surface layers */
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+
+  /* Primary — professional indigo */
+  --primary: 243 75% 59%;
+  --primary-foreground: 0 0% 100%;
+
+  /* Secondary — neutral slate */
+  --secondary: 215 20% 95%;
+  --secondary-foreground: 222 47% 11%;
+
+  /* Muted — soft backgrounds */
+  --muted: 214 32% 97%;
+  --muted-foreground: 215 16% 47%;
+
+  /* Accent */
+  --accent: 214 32% 94%;
+  --accent-foreground: 222 47% 11%;
+
+  /* Destructive */
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* Border & Input */
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 243 75% 59%;
+
+  /* Radius */
+  --radius: 0.5rem;
+
+  /* Sidebar */
+  --sidebar: 222 47% 11%;
+  --sidebar-foreground: 215 20% 85%;
+  --sidebar-muted: 215 20% 65%;
+  --sidebar-border: 222 40% 18%;
+  --sidebar-accent: 222 40% 18%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-primary: 243 75% 65%;
+
+  /* Status colors */
+  --status-saved: 215 16% 47%;
+  --status-applied: 217 91% 60%;
+  --status-screening: 262 83% 58%;
+  --status-interview: 38 92% 50%;
+  --status-assessment: 25 95% 53%;
+  --status-final: 173 80% 40%;
+  --status-offer: 142 71% 45%;
+  --status-rejected: 0 72% 51%;
+  --status-withdrawn: 215 16% 65%;
 }
+
+.dark {
+  --background: 222 47% 6%;
+  --foreground: 210 40% 94%;
+
+  --card: 222 47% 9%;
+  --card-foreground: 210 40% 94%;
+  --popover: 222 47% 9%;
+  --popover-foreground: 210 40% 94%;
+
+  --primary: 243 75% 65%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 217 33% 15%;
+  --secondary-foreground: 210 40% 94%;
+
+  --muted: 217 33% 13%;
+  --muted-foreground: 215 20% 55%;
+
+  --accent: 217 33% 15%;
+  --accent-foreground: 210 40% 94%;
+
+  --destructive: 0 62% 50%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 217 33% 17%;
+  --input: 217 33% 17%;
+  --ring: 243 75% 65%;
+
+  --sidebar: 222 47% 4%;
+  --sidebar-foreground: 215 20% 75%;
+  --sidebar-muted: 215 20% 50%;
+  --sidebar-border: 222 40% 11%;
+  --sidebar-accent: 222 40% 12%;
+  --sidebar-accent-foreground: 210 40% 94%;
+  --sidebar-primary: 243 75% 65%;
+
+  --status-saved: 215 16% 55%;
+  --status-applied: 217 91% 65%;
+  --status-screening: 262 83% 65%;
+  --status-interview: 38 92% 55%;
+  --status-assessment: 25 95% 58%;
+  --status-final: 173 80% 45%;
+  --status-offer: 142 71% 50%;
+  --status-rejected: 0 72% 58%;
+  --status-withdrawn: 215 16% 50%;
+}
+
+/* ─── Tailwind v4 Theme ──────────────────────────────────────────────────── */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-muted: hsl(var(--sidebar-muted));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-status-saved: hsl(var(--status-saved));
+  --color-status-applied: hsl(var(--status-applied));
+  --color-status-screening: hsl(var(--status-screening));
+  --color-status-interview: hsl(var(--status-interview));
+  --color-status-assessment: hsl(var(--status-assessment));
+  --color-status-final: hsl(var(--status-final));
+  --color-status-offer: hsl(var(--status-offer));
+  --color-status-rejected: hsl(var(--status-rejected));
+  --color-status-withdrawn: hsl(var(--status-withdrawn));
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Base Styles ────────────────────────────────────────────────────────── */
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  height: 100%;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
 }
