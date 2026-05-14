@@ -1,13 +1,25 @@
 "use client";
 
+import { use } from "react";
 import { useApplicationStore } from "@/hooks/useApplicationStore";
+import { useMounted } from "@/hooks/useMounted";
 import { ApplicationForm } from "@/components/applications/application-form";
+import { ApplicationDetailSkeleton } from "@/components/applications/applications-skeleton";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-export default function EditApplicationPage({ params }: { params: { id: string } }) {
+export default function EditApplicationPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  const mounted = useMounted();
   const { getApplication } = useApplicationStore();
-  const application = getApplication(params.id);
+
+  if (!mounted) return <ApplicationDetailSkeleton />;
+
+  const application = getApplication(id);
 
   if (!application) {
     return (

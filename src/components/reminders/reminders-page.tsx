@@ -8,6 +8,7 @@ import {
   Plus,
   Bell,
   Check,
+  Pencil,
   Trash2,
   ChevronDown,
   ChevronUp,
@@ -187,19 +188,90 @@ function CreateReminderForm({ onClose }: CreateReminderFormProps) {
   );
 }
 
+/* ─── Edit form schema ───────────────────────────────────────────────────── */
+
+const editReminderSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  dueDate: z.string().min(1, "Due date is required"),
+});
+type EditReminderForm = z.infer<typeof editReminderSchema>;
+
 /* ─── Reminder row ───────────────────────────────────────────────────────── */
 
 function ReminderRow({ reminder }: { reminder: Reminder }) {
-  const { toggleReminder, deleteReminder } = useApplicationStore();
+  const { toggleReminder, updateReminder, deleteReminder } = useApplicationStore();
+  const [editing, setEditing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const due = dueDateLabel(reminder.dueDate);
+
+  const { register, handleSubmit, formState: { errors } } = useForm<EditReminderForm>({
+    resolver: zodResolver(editReminderSchema),
+    defaultValues: {
+      title: reminder.title,
+      description: reminder.description ?? "",
+      dueDate: format(parseISO(reminder.dueDate), "yyyy-MM-dd'T'HH:mm"),
+    },
+  });
+
+  async function onEditSubmit(data: EditReminderForm) {
+    setSubmitting(true);
+    try {
+      updateReminder(reminder.id, {
+        title: data.title,
+        description: data.description,
+        dueDate: new Date(data.dueDate).toISOString(),
+      });
+      toast.success("Reminder updated");
+      setEditing(false);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (editing) {
+    return (
+      <div className="rounded-xl border border-primary/30 bg-card p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-[12px] font-semibold text-foreground">Edit reminder</span>
+          <button onClick={() => setEditing(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit(onEditSubmit)} className="space-y-3" noValidate>
+          <div className="space-y-1">
+            <Label className="text-[12px]">Title</Label>
+            <Input className="h-8 text-[13px]" {...register("title")} />
+            {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[12px]">Description</Label>
+            <Textarea rows={2} className="text-[13px]" {...register("description")} />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[12px]">Due date</Label>
+            <Input type="datetime-local" className="h-8 text-[13px]" {...register("dueDate")} />
+            {errors.dueDate && <p className="text-xs text-destructive">{errors.dueDate.message}</p>}
+          </div>
+          <div className="flex gap-2">
+            <Button type="submit" size="sm" className="h-7 text-xs" disabled={submitting}>
+              {submitting && <Loader2 className="h-3 w-3 animate-spin" />}
+              Save
+            </Button>
+            <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setEditing(false)}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div
       className={cn(
         "group flex items-start gap-3 rounded-xl border border-border px-4 py-3.5 transition-colors",
-        reminder.completed
-          ? "bg-muted/30 opacity-60"
-          : "bg-card hover:bg-muted/20"
+        reminder.completed ? "bg-muted/30 opacity-60" : "bg-card hover:bg-muted/20"
       )}
     >
       {/* Complete toggle */}
@@ -244,17 +316,23 @@ function ReminderRow({ reminder }: { reminder: Reminder }) {
         </div>
       </div>
 
-      {/* Delete — shows on hover */}
-      <button
-        onClick={() => {
-          deleteReminder(reminder.id);
-          toast.success("Reminder deleted");
-        }}
-        className="mt-0.5 shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
-        aria-label="Delete reminder"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
+      {/* Actions — show on hover */}
+      <div className="mt-0.5 flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <button
+          onClick={() => setEditing(true)}
+          className="text-muted-foreground transition-colors hover:text-foreground"
+          aria-label="Edit reminder"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+        <button
+          onClick={() => { deleteReminder(reminder.id); toast.success("Reminder deleted"); }}
+          className="text-muted-foreground transition-colors hover:text-destructive"
+          aria-label="Delete reminder"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
     </div>
   );
 }

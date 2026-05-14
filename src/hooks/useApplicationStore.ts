@@ -199,6 +199,19 @@ export function useApplicationStore() {
     []
   );
 
+  const updateReminder = useCallback(
+    (id: string, payload: Partial<Pick<Reminder, "title" | "description" | "dueDate" | "completed">>) => {
+      const store = getStore();
+      setStore({
+        ...store,
+        reminders: store.reminders.map((r) =>
+          r.id === id ? { ...r, ...payload, updatedAt: new Date().toISOString() } : r
+        ),
+      });
+    },
+    []
+  );
+
   const toggleReminder = useCallback((id: string) => {
     const store = getStore();
     setStore({
@@ -276,6 +289,7 @@ export function useApplicationStore() {
     getReminders,
     createReminder,
     toggleReminder,
+    updateReminder,
     deleteReminder,
     getInterviews,
     createInterview,

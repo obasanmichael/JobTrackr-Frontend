@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import Link from "next/link";
 import {
   Plus,
   CalendarCheck,
@@ -15,6 +16,7 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
+  ExternalLink,
 } from "lucide-react";
 import { format, parseISO, isFuture, isToday } from "date-fns";
 import { toast } from "sonner";
@@ -275,9 +277,19 @@ function InterviewCard({ interview }: { interview: Interview }) {
 
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[13px] font-semibold text-foreground">
-                {interview.application?.company ?? "Unknown company"}
-              </span>
+              {interview.applicationId ? (
+                <Link
+                  href={`/dashboard/applications/${interview.applicationId}`}
+                  className="group/link flex items-center gap-1 text-[13px] font-semibold text-foreground hover:text-primary transition-colors"
+                >
+                  {interview.application?.company ?? "Unknown company"}
+                  <ExternalLink className="h-3 w-3 opacity-0 group-hover/link:opacity-60 transition-opacity" />
+                </Link>
+              ) : (
+                <span className="text-[13px] font-semibold text-foreground">
+                  {interview.application?.company ?? "Unknown company"}
+                </span>
+              )}
               <span className="text-[11px] text-muted-foreground">
                 {interview.application?.jobTitle}
               </span>

@@ -1,8 +1,10 @@
-import type { Metadata } from "next";
 import { ApplicationDetail } from "@/components/applications/application-detail";
 
-export const metadata: Metadata = { title: "Application" };
-
-export default function ApplicationDetailPage({ params }: { params: { id: string } }) {
-  return <ApplicationDetail id={params.id} />;
+export default async function ApplicationDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  return <ApplicationDetail id={id} />;
 }
