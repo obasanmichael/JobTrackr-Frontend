@@ -344,10 +344,10 @@ export function ApplicationDetail({ id }: ApplicationDetailProps) {
           </div>
 
           {/* Status selector */}
-          <div className="mt-4 flex items-center gap-3 border-t border-border pt-4">
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
             <span className="text-[12px] font-medium text-muted-foreground">Status</span>
             <Select value={application.status} onValueChange={handleStatusChange}>
-              <SelectTrigger className="h-8 w-52">
+              <SelectTrigger className="h-8 w-48 min-w-0 max-w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

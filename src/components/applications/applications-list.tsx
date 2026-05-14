@@ -16,6 +16,7 @@ import {
   CalendarClock,
   Check,
   Pencil,
+  Clock,
 } from "lucide-react";
 import { format, parseISO, isPast } from "date-fns";
 import { toast } from "sonner";
@@ -348,6 +349,83 @@ function ApplicationRow({ app }: { app: Application }) {
   );
 }
 
+/* ─── Mobile card (< md) ─────────────────────────────────────────────────── */
+
+function MobileApplicationCard({ app }: { app: Application }) {
+  const { updateApplication } = useApplicationStore();
+  const deadlinePast = app.deadline && isPast(parseISO(app.deadline));
+
+  return (
+    <li className="group">
+      <Link
+        href={`/dashboard/applications/${app.id}`}
+        className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/40 active:bg-muted/60"
+      >
+        <CompanyAvatar company={app.company} />
+
+        <div className="flex-1 min-w-0">
+          {/* Title + status */}
+          <div className="flex items-start justify-between gap-2">
+            <span className="truncate text-[13px] font-semibold text-foreground leading-snug">
+              {app.jobTitle}
+            </span>
+            <div
+              onClick={(e) => e.preventDefault()}
+              className="shrink-0"
+            >
+              <InlineStatusPicker
+                current={app.status as ApplicationStatus}
+                onChange={(s) => {
+                  updateApplication(app.id, { status: s });
+                  toast.success(`Status → ${s}`);
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Company + location */}
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <span className="text-xs text-muted-foreground">{app.company}</span>
+            {app.location && (
+              <>
+                <span className="text-muted-foreground/40">·</span>
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3" />{app.location}
+                </span>
+              </>
+            )}
+            {app.workMode && app.workMode !== "Unspecified" && (
+              <>
+                <span className="text-muted-foreground/40">·</span>
+                <WorkModePill mode={app.workMode} />
+              </>
+            )}
+          </div>
+
+          {/* Meta row: deadline + updated */}
+          <div className="mt-1.5 flex items-center gap-3">
+            {app.deadline && (
+              <span className={cn(
+                "flex items-center gap-1 text-[11px] font-medium",
+                deadlinePast ? "text-destructive" : "text-muted-foreground"
+              )}>
+                <CalendarClock className="h-3 w-3" />
+                {format(parseISO(app.deadline), "MMM d")}
+              </span>
+            )}
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              {format(parseISO(app.updatedAt), "MMM d")}
+            </span>
+          </div>
+        </div>
+
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+      </Link>
+    </li>
+  );
+}
+
 /* ─── Main list ──────────────────────────────────────────────────────────── */
 
 export function ApplicationsList() {
@@ -490,9 +568,14 @@ export function ApplicationsList() {
         />
       ) : (
         <div className="rounded-xl border border-border overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* ── Mobile card list (< md) ─────────────────────────────── */}
+          <ul className="divide-y divide-border md:hidden">
+            {filtered.map((app) => <MobileApplicationCard key={app.id} app={app} />)}
+          </ul>
+
+          {/* ── Desktop table (md+) ─────────────────────────────────── */}
+          <div className="hidden md:block overflow-x-auto">
             <div className="min-w-[680px]">
-              {/* Table header */}
               <div className={cn(COL_CLASSES, "items-center gap-4 border-b border-border bg-muted/40 px-4 py-2.5")}>
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Role</span>
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Status</span>
@@ -501,8 +584,6 @@ export function ApplicationsList() {
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Updated</span>
                 <span />
               </div>
-
-              {/* Rows */}
               <ul className="divide-y divide-border">
                 {filtered.map((app) => <ApplicationRow key={app.id} app={app} />)}
               </ul>

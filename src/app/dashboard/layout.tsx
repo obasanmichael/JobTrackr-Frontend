@@ -1,5 +1,4 @@
-import { Sidebar } from "@/components/layout/sidebar";
-import { Header } from "@/components/layout/header";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { AuthGuard } from "@/components/layout/auth-guard";
 
 export default function DashboardLayout({
@@ -9,15 +8,7 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthGuard>
-      <div className="flex h-screen overflow-hidden bg-background">
-        <Sidebar />
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <Header />
-          <main className="flex-1 overflow-y-auto bg-background">
-            <div className="animate-page-in mx-auto max-w-5xl px-6 py-7">{children}</div>
-          </main>
-        </div>
-      </div>
+      <DashboardShell>{children}</DashboardShell>
     </AuthGuard>
   );
 }
