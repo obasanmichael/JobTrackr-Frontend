@@ -69,7 +69,7 @@ export interface CreateApplicationPayload {
   notes?: string;
 }
 
-export interface UpdateApplicationPayload extends Partial<CreateApplicationPayload> {}
+export type UpdateApplicationPayload = Partial<CreateApplicationPayload>;
 
 /* ─── Timeline Events ────────────────────────────────────────────────────── */
 
@@ -139,7 +139,7 @@ export interface CreateInterviewPayload {
   outcome?: string;
 }
 
-export interface UpdateInterviewPayload extends Partial<CreateInterviewPayload> {}
+export type UpdateInterviewPayload = Partial<CreateInterviewPayload>;
 
 /* ─── Dashboard ──────────────────────────────────────────────────────────── */
 

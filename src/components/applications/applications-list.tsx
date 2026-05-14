@@ -8,7 +8,6 @@ import {
   Briefcase,
   ExternalLink,
   MapPin,
-  Calendar,
   ChevronRight,
   X,
 } from "lucide-react";

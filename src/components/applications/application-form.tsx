@@ -129,6 +129,7 @@ export function ApplicationForm({ existing }: ApplicationFormProps) {
       : { status: "Applied" },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const status = watch("status");
 
   async function onSubmit(rawData: unknown) {

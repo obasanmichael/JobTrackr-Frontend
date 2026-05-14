@@ -102,6 +102,7 @@ export function TimelineSection({ applicationId }: TimelineSectionProps) {
           className="rounded-xl border border-border bg-muted/30 p-4 space-y-3"
         >
           <Select
+            // eslint-disable-next-line react-hooks/incompatible-library
             value={watch("type")}
             onValueChange={(v) => setValue("type", v as TimelineEventType)}
           >
@@ -153,8 +154,8 @@ export function TimelineSection({ applicationId }: TimelineSectionProps) {
           <div className="absolute left-[15px] top-5 bottom-1 w-px bg-border" />
 
           <ul className="space-y-1">
-            {events.map((event, i) => (
-              <TimelineItem key={event.id} event={event} isLast={i === events.length - 1} />
+            {events.map((event) => (
+              <TimelineItem key={event.id} event={event} />
             ))}
           </ul>
         </div>
@@ -163,7 +164,7 @@ export function TimelineSection({ applicationId }: TimelineSectionProps) {
   );
 }
 
-function TimelineItem({ event, isLast }: { event: TimelineEvent; isLast: boolean }) {
+function TimelineItem({ event }: { event: TimelineEvent }) {
   const Icon = ICON_MAP[event.type] ?? FileText;
   const colorClass = COLOR_MAP[event.type] ?? COLOR_MAP["General Update"];
 

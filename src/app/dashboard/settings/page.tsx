@@ -1,6 +1,5 @@
 "use client";
 
-import type { Metadata } from "next";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";

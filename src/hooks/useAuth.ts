@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { saveSession, clearSession, getStoredUser, isAuthenticated } from "@/lib/auth";
@@ -16,14 +16,8 @@ const DEV_USER: User = {
 
 export function useAuth() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(DEV_USER);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const stored = getStoredUser();
-    setUser(stored ?? DEV_USER);
-    setLoading(false);
-  }, []);
+  const [user, setUser] = useState<User | null>(() => getStoredUser() ?? DEV_USER);
+  const loading = false;
 
   const login = useCallback(
     async (payload: LoginPayload): Promise<void> => {
