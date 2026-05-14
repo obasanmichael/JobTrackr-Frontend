@@ -14,7 +14,7 @@ export default function DashboardLayout({
         <div className="flex flex-1 flex-col overflow-hidden">
           <Header />
           <main className="flex-1 overflow-y-auto bg-background">
-            <div className="mx-auto max-w-5xl px-6 py-7">{children}</div>
+            <div className="animate-page-in mx-auto max-w-5xl px-6 py-7">{children}</div>
           </main>
         </div>
       </div>

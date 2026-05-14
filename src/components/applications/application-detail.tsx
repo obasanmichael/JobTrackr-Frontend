@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useMounted } from "@/hooks/useMounted";
+import { ApplicationDetailSkeleton } from "./applications-skeleton";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -61,11 +63,14 @@ function DetailRow({ icon: Icon, label, value }: {
 
 export function ApplicationDetail({ id }: ApplicationDetailProps) {
   const router = useRouter();
+  const mounted = useMounted();
   const { getApplication, updateApplication, deleteApplication, getReminders, getInterviews } =
     useApplicationStore();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  if (!mounted) return <ApplicationDetailSkeleton />;
 
   const application = getApplication(id);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (!application) {
     return (

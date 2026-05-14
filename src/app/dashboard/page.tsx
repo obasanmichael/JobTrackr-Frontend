@@ -13,7 +13,6 @@ export default function DashboardPage() {
     let activeApplications = 0;
     let offerCount = 0;
     let rejectionCount = 0;
-
     const inactiveStatuses = new Set(["Rejected", "Withdrawn", "Offer", "Saved"]);
 
     applications.forEach((a) => {
@@ -24,6 +23,7 @@ export default function DashboardPage() {
     });
 
     const now = new Date();
+
     const upcomingReminders = getReminders()
       .filter((r) => !r.completed && new Date(r.dueDate) >= now)
       .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
@@ -31,13 +31,11 @@ export default function DashboardPage() {
 
     const upcomingInterviews = getInterviews()
       .filter((iv) => iv.scheduledAt && new Date(iv.scheduledAt) >= now)
-      .sort((a, b) =>
-        new Date(a.scheduledAt!).getTime() - new Date(b.scheduledAt!).getTime()
-      )
+      .sort((a, b) => new Date(a.scheduledAt!).getTime() - new Date(b.scheduledAt!).getTime())
       .slice(0, 5);
 
-    const allEvents = applications.flatMap((a) => getEvents(a.id));
-    const recentEvents = allEvents
+    const recentEvents = applications
+      .flatMap((a) => getEvents(a.id))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 5);
 
@@ -53,5 +51,5 @@ export default function DashboardPage() {
     };
   }, [applications, getReminders, getInterviews, getEvents]);
 
-  return <DashboardOverview summary={summary} />;
+  return <DashboardOverview summary={summary} applications={applications} />;
 }

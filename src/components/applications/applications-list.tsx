@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { ApplicationsListSkeleton } from "./applications-skeleton";
+import { useMounted } from "@/hooks/useMounted";
 import {
   Plus,
   Search,
@@ -62,6 +64,7 @@ function WorkModePill({ mode }: { mode?: string }) {
 }
 
 export function ApplicationsList() {
+  const mounted = useMounted();
   const { applications } = useApplicationStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>(ALL);
@@ -85,6 +88,8 @@ export function ApplicationsList() {
     });
     return counts;
   }, [applications]);
+
+  if (!mounted) return <ApplicationsListSkeleton />;
 
   return (
     <div className="space-y-5">
