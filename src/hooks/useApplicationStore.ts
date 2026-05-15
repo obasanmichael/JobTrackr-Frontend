@@ -2,11 +2,17 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  MOCK_APPLICATIONS,
   MOCK_TIMELINE_EVENTS,
   MOCK_REMINDERS,
   MOCK_INTERVIEWS,
 } from "@/lib/mock-data";
+import {
+  createApplication as createApplicationApi,
+  deleteApplication as deleteApplicationApi,
+  getApplication as getApplicationApi,
+  listApplications,
+  updateApplication as updateApplicationApi,
+} from "@/features/job-seeker/applications/api/applications-api";
 import type {
   Application,
   TimelineEvent,
@@ -21,41 +27,81 @@ const STORAGE_KEY = "jt_dev_store";
 
 interface Store {
   applications: Application[];
+  applicationsLoading: boolean;
+  applicationsError: string | null;
   events: TimelineEvent[];
   reminders: Reminder[];
   interviews: Interview[];
 }
 
-function loadStore(): Store {
+function loadDevSlice(): Pick<Store, "events" | "reminders" | "interviews"> {
   if (typeof window === "undefined") {
-    return { applications: MOCK_APPLICATIONS, events: MOCK_TIMELINE_EVENTS, reminders: MOCK_REMINDERS, interviews: MOCK_INTERVIEWS };
+    return {
+      events: MOCK_TIMELINE_EVENTS,
+      reminders: MOCK_REMINDERS,
+      interviews: MOCK_INTERVIEWS,
+    };
   }
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as Store;
-  } catch {}
-  return { applications: MOCK_APPLICATIONS, events: MOCK_TIMELINE_EVENTS, reminders: MOCK_REMINDERS, interviews: MOCK_INTERVIEWS };
+    if (!raw) {
+      return {
+        events: MOCK_TIMELINE_EVENTS,
+        reminders: MOCK_REMINDERS,
+        interviews: MOCK_INTERVIEWS,
+      };
+    }
+    const parsed = JSON.parse(raw) as Partial<Store>;
+    return {
+      events: parsed.events ?? MOCK_TIMELINE_EVENTS,
+      reminders: parsed.reminders ?? MOCK_REMINDERS,
+      interviews: parsed.interviews ?? MOCK_INTERVIEWS,
+    };
+  } catch {
+    return {
+      events: MOCK_TIMELINE_EVENTS,
+      reminders: MOCK_REMINDERS,
+      interviews: MOCK_INTERVIEWS,
+    };
+  }
 }
 
-function saveStore(store: Store) {
+function saveDevSlice(store: Store) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-  } catch {}
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        events: store.events,
+        reminders: store.reminders,
+        interviews: store.interviews,
+      })
+    );
+  } catch {
+    /* ignore quota */
+  }
 }
 
 function uuid() {
-  return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+  return crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random()}`;
 }
 
-/* ─── Global singleton so state is shared across hook instances ─────────── */
-
-let _store: Store = loadStore();
+let _store: Store = {
+  applications: [],
+  applicationsLoading: false,
+  applicationsError: null,
+  ...loadDevSlice(),
+};
 const _listeners = new Set<() => void>();
 
-function getStore() { return _store; }
+function getStore() {
+  return _store;
+}
+
 function setStore(next: Store) {
   _store = next;
-  saveStore(next);
+  saveDevSlice(next);
   _listeners.forEach((fn) => fn());
 }
 
@@ -65,10 +111,33 @@ export function useApplicationStore() {
   useEffect(() => {
     const trigger = () => rerender((n) => n + 1);
     _listeners.add(trigger);
-    return () => { _listeners.delete(trigger); };
+    return () => {
+      _listeners.delete(trigger);
+    };
   }, []);
 
-  /* ── Applications ────────────────────────────────────────────────────── */
+  const refreshApplications = useCallback(async (search?: string) => {
+    setStore({
+      ...getStore(),
+      applicationsLoading: true,
+      applicationsError: null,
+    });
+    try {
+      const applications = await listApplications(search);
+      setStore({
+        ...getStore(),
+        applications,
+        applicationsLoading: false,
+        applicationsError: null,
+      });
+    } catch {
+      setStore({
+        ...getStore(),
+        applicationsLoading: false,
+        applicationsError: "Could not load applications. Please try again.",
+      });
+    }
+  }, []);
 
   const getApplications = useCallback(() => getStore().applications, []);
 
@@ -77,38 +146,53 @@ export function useApplicationStore() {
     []
   );
 
-  const createApplication = useCallback((payload: CreateApplicationPayload): Application => {
-    const now = new Date().toISOString();
-    const app: Application = {
-      ...payload,
-      id: `app-${uuid()}`,
-      userId: "dev",
-      createdAt: now,
-      updatedAt: now,
-    };
-    const event: TimelineEvent = {
-      id: `ev-${uuid()}`,
-      applicationId: app.id,
-      type: "Status Change",
-      content: `Application created with status: ${app.status}`,
-      createdAt: now,
-    };
-    const store = getStore();
-    setStore({
-      ...store,
-      applications: [app, ...store.applications],
-      events: [event, ...store.events],
-    });
-    return app;
+  const ensureApplication = useCallback(async (id: string) => {
+    const existing = getStore().applications.find((a) => a.id === id);
+    if (existing) return existing;
+    try {
+      const app = await getApplicationApi(id);
+      const store = getStore();
+      setStore({
+        ...store,
+        applications: [app, ...store.applications.filter((a) => a.id !== id)],
+      });
+      return app;
+    } catch {
+      return null;
+    }
   }, []);
 
+  const createApplication = useCallback(
+    async (payload: CreateApplicationPayload): Promise<Application> => {
+      const app = await createApplicationApi(payload);
+      const now = new Date().toISOString();
+      const event: TimelineEvent = {
+        id: `ev-${uuid()}`,
+        applicationId: app.id,
+        type: "Status Change",
+        content: `Application created with status: ${app.status}`,
+        createdAt: now,
+      };
+      const store = getStore();
+      setStore({
+        ...store,
+        applications: [app, ...store.applications],
+        events: [event, ...store.events],
+      });
+      return app;
+    },
+    []
+  );
+
   const updateApplication = useCallback(
-    (id: string, payload: UpdateApplicationPayload): Application | null => {
+    async (
+      id: string,
+      payload: UpdateApplicationPayload
+    ): Promise<Application | null> => {
       const store = getStore();
       const existing = store.applications.find((a) => a.id === id);
       if (!existing) return null;
-      const now = new Date().toISOString();
-      const updated: Application = { ...existing, ...payload, updatedAt: now };
+      const updated = await updateApplicationApi(id, payload);
       const events = [...store.events];
 
       if (payload.status && payload.status !== existing.status) {
@@ -117,7 +201,7 @@ export function useApplicationStore() {
           applicationId: id,
           type: "Status Change",
           content: `Status changed from ${existing.status} → ${payload.status}`,
-          createdAt: now,
+          createdAt: new Date().toISOString(),
         });
       }
 
@@ -131,7 +215,8 @@ export function useApplicationStore() {
     []
   );
 
-  const deleteApplication = useCallback((id: string) => {
+  const deleteApplication = useCallback(async (id: string) => {
+    await deleteApplicationApi(id);
     const store = getStore();
     setStore({
       ...store,
@@ -142,13 +227,14 @@ export function useApplicationStore() {
     });
   }, []);
 
-  /* ── Timeline events ─────────────────────────────────────────────────── */
-
   const getEvents = useCallback(
     (applicationId: string) =>
-      getStore().events
-        .filter((e) => e.applicationId === applicationId)
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+      getStore()
+        .events.filter((e) => e.applicationId === applicationId)
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ),
     []
   );
 
@@ -169,8 +255,6 @@ export function useApplicationStore() {
     []
   );
 
-  /* ── Reminders ───────────────────────────────────────────────────────── */
-
   const getReminders = useCallback(
     (applicationId?: string) => {
       const store = getStore();
@@ -182,7 +266,12 @@ export function useApplicationStore() {
   );
 
   const createReminder = useCallback(
-    (payload: Omit<Reminder, "id" | "userId" | "completed" | "createdAt" | "updatedAt">): Reminder => {
+    (
+      payload: Omit<
+        Reminder,
+        "id" | "userId" | "completed" | "createdAt" | "updatedAt"
+      >
+    ): Reminder => {
       const now = new Date().toISOString();
       const reminder: Reminder = {
         ...payload,
@@ -200,12 +289,19 @@ export function useApplicationStore() {
   );
 
   const updateReminder = useCallback(
-    (id: string, payload: Partial<Pick<Reminder, "title" | "description" | "dueDate" | "completed">>) => {
+    (
+      id: string,
+      payload: Partial<
+        Pick<Reminder, "title" | "description" | "dueDate" | "completed">
+      >
+    ) => {
       const store = getStore();
       setStore({
         ...store,
         reminders: store.reminders.map((r) =>
-          r.id === id ? { ...r, ...payload, updatedAt: new Date().toISOString() } : r
+          r.id === id
+            ? { ...r, ...payload, updatedAt: new Date().toISOString() }
+            : r
         ),
       });
     },
@@ -217,17 +313,20 @@ export function useApplicationStore() {
     setStore({
       ...store,
       reminders: store.reminders.map((r) =>
-        r.id === id ? { ...r, completed: !r.completed, updatedAt: new Date().toISOString() } : r
+        r.id === id
+          ? { ...r, completed: !r.completed, updatedAt: new Date().toISOString() }
+          : r
       ),
     });
   }, []);
 
   const deleteReminder = useCallback((id: string) => {
     const store = getStore();
-    setStore({ ...store, reminders: store.reminders.filter((r) => r.id !== id) });
+    setStore({
+      ...store,
+      reminders: store.reminders.filter((r) => r.id !== id),
+    });
   }, []);
-
-  /* ── Interviews ──────────────────────────────────────────────────────── */
 
   const getInterviews = useCallback(
     (applicationId?: string) => {
@@ -240,7 +339,9 @@ export function useApplicationStore() {
   );
 
   const createInterview = useCallback(
-    (payload: Omit<Interview, "id" | "userId" | "createdAt" | "updatedAt">): Interview => {
+    (
+      payload: Omit<Interview, "id" | "userId" | "createdAt" | "updatedAt">
+    ): Interview => {
       const now = new Date().toISOString();
       const interview: Interview = {
         ...payload,
@@ -256,29 +357,46 @@ export function useApplicationStore() {
     []
   );
 
-  const updateInterview = useCallback((id: string, payload: Partial<Interview>) => {
-    const store = getStore();
-    setStore({
-      ...store,
-      interviews: store.interviews.map((i) =>
-        i.id === id ? { ...i, ...payload, updatedAt: new Date().toISOString() } : i
-      ),
-    });
-  }, []);
+  const updateInterview = useCallback(
+    (id: string, payload: Partial<Interview>) => {
+      const store = getStore();
+      setStore({
+        ...store,
+        interviews: store.interviews.map((i) =>
+          i.id === id
+            ? { ...i, ...payload, updatedAt: new Date().toISOString() }
+            : i
+        ),
+      });
+    },
+    []
+  );
 
   const deleteInterview = useCallback((id: string) => {
     const store = getStore();
-    setStore({ ...store, interviews: store.interviews.filter((i) => i.id !== id) });
+    setStore({
+      ...store,
+      interviews: store.interviews.filter((i) => i.id !== id),
+    });
   }, []);
 
-  /* ── Reset dev data ──────────────────────────────────────────────────── */
-
   const resetStore = useCallback(() => {
-    setStore({ applications: MOCK_APPLICATIONS, events: MOCK_TIMELINE_EVENTS, reminders: MOCK_REMINDERS, interviews: MOCK_INTERVIEWS });
+    setStore({
+      applications: [],
+      applicationsLoading: false,
+      applicationsError: null,
+      events: MOCK_TIMELINE_EVENTS,
+      reminders: MOCK_REMINDERS,
+      interviews: MOCK_INTERVIEWS,
+    });
   }, []);
 
   return {
     applications: getStore().applications,
+    applicationsLoading: getStore().applicationsLoading,
+    applicationsError: getStore().applicationsError,
+    refreshApplications,
+    ensureApplication,
     getApplications,
     getApplication,
     createApplication,

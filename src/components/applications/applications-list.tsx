@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { ApplicationsListSkeleton } from "./applications-skeleton";
 import { useMounted } from "@/hooks/useMounted";
@@ -21,6 +21,7 @@ import {
 import { format, parseISO, isPast } from "date-fns";
 import { toast } from "sonner";
 import { useApplicationStore } from "@/hooks/useApplicationStore";
+import { getApiErrorMessage } from "@/shared/lib/api-errors";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -201,27 +202,39 @@ function ApplicationRow({ app }: { app: Application }) {
     setEditingField(field);
   }
 
-  function saveLocation(value: string) {
+  async function saveLocation(value: string) {
     const trimmed = value.trim();
     if (trimmed !== (app.location ?? "")) {
-      updateApplication(app.id, { location: trimmed || undefined });
-      toast.success("Location updated");
+      try {
+        await updateApplication(app.id, { location: trimmed || undefined });
+        toast.success("Location updated");
+      } catch (err) {
+        toast.error(getApiErrorMessage(err));
+      }
     }
     setEditingField(null);
   }
 
-  function saveDeadline(value: string) {
+  async function saveDeadline(value: string) {
     const iso = value ? new Date(value + "T00:00:00").toISOString() : undefined;
     if (iso !== app.deadline) {
-      updateApplication(app.id, { deadline: iso });
-      toast.success(iso ? "Deadline updated" : "Deadline cleared");
+      try {
+        await updateApplication(app.id, { deadline: iso });
+        toast.success(iso ? "Deadline updated" : "Deadline cleared");
+      } catch (err) {
+        toast.error(getApiErrorMessage(err));
+      }
     }
     setEditingField(null);
   }
 
-  function handleStatusChange(status: ApplicationStatus) {
-    updateApplication(app.id, { status });
-    toast.success(`Status → ${status}`);
+  async function handleStatusChange(status: ApplicationStatus) {
+    try {
+      await updateApplication(app.id, { status });
+      toast.success(`Status → ${status}`);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    }
   }
 
   return (
@@ -375,9 +388,13 @@ function MobileApplicationCard({ app }: { app: Application }) {
             >
               <InlineStatusPicker
                 current={app.status as ApplicationStatus}
-                onChange={(s) => {
-                  updateApplication(app.id, { status: s });
-                  toast.success(`Status → ${s}`);
+                onChange={async (s) => {
+                  try {
+                    await updateApplication(app.id, { status: s });
+                    toast.success(`Status → ${s}`);
+                  } catch (err) {
+                    toast.error(getApiErrorMessage(err));
+                  }
                 }}
               />
             </div>
@@ -430,10 +447,24 @@ function MobileApplicationCard({ app }: { app: Application }) {
 
 export function ApplicationsList() {
   const mounted = useMounted();
-  const { applications } = useApplicationStore();
+  const {
+    applications,
+    applicationsLoading,
+    applicationsError,
+    refreshApplications,
+  } = useApplicationStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>(ALL);
   const [sortKey, setSortKey] = useState<SortKey>("newest");
+
+  useEffect(() => {
+    const trimmed = search.trim();
+    const delay = trimmed === "" ? 0 : 300;
+    const id = window.setTimeout(() => {
+      void refreshApplications(trimmed || undefined);
+    }, delay);
+    return () => window.clearTimeout(id);
+  }, [search, refreshApplications]);
 
   const filtered = useMemo(() => {
     const base = applications.filter((app) => {
@@ -471,8 +502,17 @@ export function ApplicationsList() {
 
   if (!mounted) return <ApplicationsListSkeleton />;
 
+  if (applicationsLoading && applications.length === 0) {
+    return <ApplicationsListSkeleton />;
+  }
+
   return (
     <div className="space-y-5">
+      {applicationsError && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          {applicationsError}
+        </div>
+      )}
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>

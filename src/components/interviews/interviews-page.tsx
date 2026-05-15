@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -413,8 +413,12 @@ function InterviewGroup({
 /* ─── Main page ──────────────────────────────────────────────────────────── */
 
 export function InterviewsPage() {
-  const { getInterviews } = useApplicationStore();
+  const { getInterviews, refreshApplications } = useApplicationStore();
   const [showForm, setShowForm] = useState(false);
+
+  useEffect(() => {
+    void refreshApplications();
+  }, [refreshApplications]);
 
   const allInterviews = getInterviews();
 

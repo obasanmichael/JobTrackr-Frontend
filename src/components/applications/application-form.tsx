@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useApplicationStore } from "@/hooks/useApplicationStore";
+import { getApiErrorMessage } from "@/shared/lib/api-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -144,14 +145,16 @@ export function ApplicationForm({ existing }: ApplicationFormProps) {
         deadline: data.deadline ? new Date(data.deadline).toISOString() : undefined,
       };
       if (existing) {
-        updateApplication(existing.id, payload);
+        await updateApplication(existing.id, payload);
         toast.success("Application updated");
         router.push(`/dashboard/applications/${existing.id}`);
       } else {
-        const app = createApplication(payload);
+        const app = await createApplication(payload);
         toast.success("Application added");
         router.push(`/dashboard/applications/${app.id}`);
       }
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }

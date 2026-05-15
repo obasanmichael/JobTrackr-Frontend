@@ -1,12 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useApplicationStore } from "@/hooks/useApplicationStore";
 import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
 import type { DashboardSummary } from "@/types";
 
 export default function DashboardPage() {
-  const { applications, getReminders, getInterviews, getEvents } = useApplicationStore();
+  const { applications, getReminders, getInterviews, getEvents, refreshApplications } =
+    useApplicationStore();
+
+  useEffect(() => {
+    void refreshApplications();
+  }, [refreshApplications]);
 
   const summary = useMemo<DashboardSummary>(() => {
     const byStatus: Record<string, number> = {};

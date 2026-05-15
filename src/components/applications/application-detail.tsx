@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMounted } from "@/hooks/useMounted";
 import { ApplicationDetailSkeleton } from "./applications-skeleton";
@@ -28,6 +28,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useApplicationStore } from "@/hooks/useApplicationStore";
+import { getApiErrorMessage } from "@/shared/lib/api-errors";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -226,17 +227,39 @@ function InlineInterviewForm({
 export function ApplicationDetail({ id }: ApplicationDetailProps) {
   const router = useRouter();
   const mounted = useMounted();
-  const { getApplication, updateApplication, deleteApplication, getReminders, getInterviews } =
-    useApplicationStore();
+  const {
+    applications,
+    ensureApplication,
+    updateApplication,
+    deleteApplication,
+    getReminders,
+    getInterviews,
+  } = useApplicationStore();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showReminderForm, setShowReminderForm] = useState(false);
   const [showInterviewForm, setShowInterviewForm] = useState(false);
+  const [fetchAttempted, setFetchAttempted] = useState(false);
+
+  useEffect(() => {
+    queueMicrotask(() => setFetchAttempted(false));
+    let cancelled = false;
+    void ensureApplication(id).finally(() => {
+      if (!cancelled) setFetchAttempted(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, ensureApplication]);
+
+  const application = applications.find((a) => a.id === id) ?? null;
 
   if (!mounted) return <ApplicationDetailSkeleton />;
 
-  const application = getApplication(id);
+  if (!fetchAttempted && !application) {
+    return <ApplicationDetailSkeleton />;
+  }
 
-  if (!application) {
+  if (fetchAttempted && !application) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <p className="text-sm font-medium text-foreground">Application not found</p>
@@ -246,6 +269,10 @@ export function ApplicationDetail({ id }: ApplicationDetailProps) {
         </Button>
       </div>
     );
+  }
+
+  if (!application) {
+    return <ApplicationDetailSkeleton />;
   }
 
   const reminders = getReminders(id);
@@ -263,15 +290,23 @@ export function ApplicationDetail({ id }: ApplicationDetailProps) {
           .join(" – ")
       : null;
 
-  function handleStatusChange(newStatus: string) {
-    updateApplication(id, { status: newStatus as ApplicationStatus });
-    toast.success(`Status updated to ${newStatus}`);
+  async function handleStatusChange(newStatus: string) {
+    try {
+      await updateApplication(id, { status: newStatus as ApplicationStatus });
+      toast.success(`Status updated to ${newStatus}`);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    }
   }
 
-  function handleDelete() {
-    deleteApplication(id);
-    toast.success("Application deleted");
-    router.push("/dashboard/applications");
+  async function handleDelete() {
+    try {
+      await deleteApplication(id);
+      toast.success("Application deleted");
+      router.push("/dashboard/applications");
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    }
   }
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect, useState } from "react";
 import { useApplicationStore } from "@/hooks/useApplicationStore";
 import { useMounted } from "@/hooks/useMounted";
 import { ApplicationForm } from "@/components/applications/application-form";
@@ -15,13 +15,29 @@ export default function EditApplicationPage({
 }) {
   const { id } = use(params);
   const mounted = useMounted();
-  const { getApplication } = useApplicationStore();
+  const { applications, ensureApplication } = useApplicationStore();
+  const [fetchAttempted, setFetchAttempted] = useState(false);
+
+  useEffect(() => {
+    queueMicrotask(() => setFetchAttempted(false));
+    let cancelled = false;
+    void ensureApplication(id).finally(() => {
+      if (!cancelled) setFetchAttempted(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, ensureApplication]);
+
+  const application = applications.find((a) => a.id === id) ?? null;
 
   if (!mounted) return <ApplicationDetailSkeleton />;
 
-  const application = getApplication(id);
+  if (!fetchAttempted && !application) {
+    return <ApplicationDetailSkeleton />;
+  }
 
-  if (!application) {
+  if (fetchAttempted && !application) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <p className="text-sm font-medium">Application not found</p>
@@ -30,6 +46,10 @@ export default function EditApplicationPage({
         </Button>
       </div>
     );
+  }
+
+  if (!application) {
+    return <ApplicationDetailSkeleton />;
   }
 
   return <ApplicationForm existing={application} />;

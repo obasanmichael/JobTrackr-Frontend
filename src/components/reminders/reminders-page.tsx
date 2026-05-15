@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -381,8 +381,12 @@ function ReminderGroup({
 /* ─── Main page ──────────────────────────────────────────────────────────── */
 
 export function RemindersPage() {
-  const { getReminders } = useApplicationStore();
+  const { getReminders, refreshApplications } = useApplicationStore();
   const [showForm, setShowForm] = useState(false);
+
+  useEffect(() => {
+    void refreshApplications();
+  }, [refreshApplications]);
 
   const allReminders = getReminders();
   const { overdue, upcoming, completed } = useMemo(() => groupReminders(allReminders), [allReminders]);

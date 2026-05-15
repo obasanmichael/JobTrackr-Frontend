@@ -64,7 +64,7 @@ function LoginPageContent() {
         <div>
           <blockquote className="space-y-2">
             <p className="text-lg font-medium leading-relaxed text-white/80">
-              &ldquo;The best job seekers don&apos;t just apply — they track, follow up, and stay organised.&rdquo;
+              &ldquo;The best job seekers don&apos;t just apply; they track, follow up, and stay organised.&rdquo;
             </p>
           </blockquote>
         </div>
