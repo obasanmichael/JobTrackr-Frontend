@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { MOCK_REMINDERS, MOCK_INTERVIEWS } from "@/lib/mock-data";
 import {
   createApplication as createApplicationApi,
   deleteApplication as deleteApplicationApi,
@@ -17,6 +16,22 @@ import {
   createTimelinePayloadToApi,
   eventFromApi,
 } from "@/features/job-seeker/applications/lib/timeline-mappers";
+import {
+  listReminders as listRemindersApi,
+  createReminder as createReminderApi,
+  updateReminder as updateReminderApi,
+  deleteReminder as deleteReminderApi,
+} from "@/features/job-seeker/reminders/api/reminders-api";
+import {
+  listInterviews as listInterviewsApi,
+  createInterview as createInterviewApi,
+  updateInterview as updateInterviewApi,
+  deleteInterview as deleteInterviewApi,
+} from "@/features/job-seeker/interviews/api/interviews-api";
+import {
+  interviewCreatePayloadToApi,
+  interviewUpdatePayloadToApi,
+} from "@/features/job-seeker/interviews/lib/interview-mappers";
 import type {
   Application,
   TimelineEvent,
@@ -26,8 +41,7 @@ import type {
   UpdateApplicationPayload,
   CreateTimelineEventPayload,
 } from "@/types";
-
-const STORAGE_KEY = "jt_dev_store";
+import type { InterviewStage, InterviewType } from "@/lib/constants";
 
 interface Store {
   applications: Application[];
@@ -36,55 +50,9 @@ interface Store {
   eventsByApplicationId: Record<string, TimelineEvent[]>;
   eventsLoadingByApplicationId: Record<string, boolean>;
   reminders: Reminder[];
+  remindersLoading: boolean;
   interviews: Interview[];
-}
-
-function loadDevSlice(): Pick<Store, "reminders" | "interviews"> {
-  if (typeof window === "undefined") {
-    return {
-      reminders: MOCK_REMINDERS,
-      interviews: MOCK_INTERVIEWS,
-    };
-  }
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return {
-        reminders: MOCK_REMINDERS,
-        interviews: MOCK_INTERVIEWS,
-      };
-    }
-    const parsed = JSON.parse(raw) as Partial<Store>;
-    return {
-      reminders: parsed.reminders ?? MOCK_REMINDERS,
-      interviews: parsed.interviews ?? MOCK_INTERVIEWS,
-    };
-  } catch {
-    return {
-      reminders: MOCK_REMINDERS,
-      interviews: MOCK_INTERVIEWS,
-    };
-  }
-}
-
-function saveDevSlice(store: Store) {
-  try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        reminders: store.reminders,
-        interviews: store.interviews,
-      })
-    );
-  } catch {
-    /* ignore quota */
-  }
-}
-
-function uuid() {
-  return crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random()}`;
+  interviewsLoading: boolean;
 }
 
 let _store: Store = {
@@ -93,8 +61,12 @@ let _store: Store = {
   applicationsError: null,
   eventsByApplicationId: {},
   eventsLoadingByApplicationId: {},
-  ...loadDevSlice(),
+  reminders: [],
+  remindersLoading: false,
+  interviews: [],
+  interviewsLoading: false,
 };
+
 const _listeners = new Set<() => void>();
 
 function getStore() {
@@ -103,7 +75,6 @@ function getStore() {
 
 function setStore(next: Store) {
   _store = next;
-  saveDevSlice(next);
   _listeners.forEach((fn) => fn());
 }
 
@@ -118,37 +89,13 @@ export function useApplicationStore() {
     };
   }, []);
 
-  const refreshApplications = useCallback(async (search?: string) => {
-    setStore({
-      ...getStore(),
-      applicationsLoading: true,
-      applicationsError: null,
-    });
-    try {
-      const applications = await listApplications(search);
-      setStore({
-        ...getStore(),
-        applications,
-        applicationsLoading: false,
-        applicationsError: null,
-      });
-    } catch {
-      setStore({
-        ...getStore(),
-        applicationsLoading: false,
-        applicationsError: "Could not load applications. Please try again.",
-      });
-    }
-  }, []);
+  /* ── Timeline events ───────────────────────────────────────────────────── */
 
   const refreshEvents = useCallback(async (applicationId: string) => {
     const store = getStore();
     setStore({
       ...store,
-      eventsLoadingByApplicationId: {
-        ...store.eventsLoadingByApplicationId,
-        [applicationId]: true,
-      },
+      eventsLoadingByApplicationId: { ...store.eventsLoadingByApplicationId, [applicationId]: true },
     });
     try {
       const raw = await listApplicationEvents(applicationId);
@@ -156,23 +103,53 @@ export function useApplicationStore() {
       const next = getStore();
       setStore({
         ...next,
-        eventsByApplicationId: {
-          ...next.eventsByApplicationId,
-          [applicationId]: mapped,
-        },
-        eventsLoadingByApplicationId: {
-          ...next.eventsLoadingByApplicationId,
-          [applicationId]: false,
-        },
+        eventsByApplicationId: { ...next.eventsByApplicationId, [applicationId]: mapped },
+        eventsLoadingByApplicationId: { ...next.eventsLoadingByApplicationId, [applicationId]: false },
       });
     } catch {
       const next = getStore();
       setStore({
         ...next,
-        eventsLoadingByApplicationId: {
-          ...next.eventsLoadingByApplicationId,
-          [applicationId]: false,
-        },
+        eventsLoadingByApplicationId: { ...next.eventsLoadingByApplicationId, [applicationId]: false },
+      });
+    }
+  }, []);
+
+  const getEvents = useCallback((applicationId: string) => {
+    const list = getStore().eventsByApplicationId[applicationId] ?? [];
+    return [...list].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, []);
+
+  const getEventsLoading = useCallback(
+    (applicationId: string) => Boolean(getStore().eventsLoadingByApplicationId[applicationId]),
+    []
+  );
+
+  const addEvent = useCallback(
+    async (applicationId: string, payload: CreateTimelineEventPayload): Promise<TimelineEvent> => {
+      const body = createTimelinePayloadToApi(payload);
+      const raw = await createApplicationEvent(applicationId, body);
+      const event = eventFromApi(raw);
+      await refreshEvents(applicationId);
+      return event;
+    },
+    [refreshEvents]
+  );
+
+  /* ── Applications ──────────────────────────────────────────────────────── */
+
+  const refreshApplications = useCallback(async (search?: string) => {
+    setStore({ ...getStore(), applicationsLoading: true, applicationsError: null });
+    try {
+      const applications = await listApplications(search);
+      setStore({ ...getStore(), applications, applicationsLoading: false, applicationsError: null });
+    } catch {
+      setStore({
+        ...getStore(),
+        applicationsLoading: false,
+        applicationsError: "Could not load applications. Please try again.",
       });
     }
   }, []);
@@ -207,38 +184,26 @@ export function useApplicationStore() {
         await createApplicationEvent(app.id, {
           type: "GENERAL_UPDATE",
           title: "Application added",
-          description: `Now tracking ${app.jobTitle} at ${app.company} (${app.status}).`.slice(
-            0,
-            2000
-          ),
+          description: `Now tracking ${app.jobTitle} at ${app.company} (${app.status}).`.slice(0, 2000),
         });
       } catch {
         /* timeline seed is best-effort */
       }
       await refreshEvents(app.id);
       const store = getStore();
-      setStore({
-        ...store,
-        applications: [app, ...store.applications],
-      });
+      setStore({ ...store, applications: [app, ...store.applications] });
       return app;
     },
     [refreshEvents]
   );
 
   const updateApplication = useCallback(
-    async (
-      id: string,
-      payload: UpdateApplicationPayload
-    ): Promise<Application | null> => {
+    async (id: string, payload: UpdateApplicationPayload): Promise<Application | null> => {
       const store = getStore();
       const existing = store.applications.find((a) => a.id === id);
       if (!existing) return null;
       const updated = await updateApplicationApi(id, payload);
-      setStore({
-        ...store,
-        applications: store.applications.map((a) => (a.id === id ? updated : a)),
-      });
+      setStore({ ...store, applications: store.applications.map((a) => (a.id === id ? updated : a)) });
       if (payload.status && payload.status !== existing.status) {
         await refreshEvents(id);
       }
@@ -260,64 +225,55 @@ export function useApplicationStore() {
       eventsByApplicationId,
       eventsLoadingByApplicationId,
       reminders: store.reminders.filter((r) => r.applicationId !== id),
-      interviews: store.interviews.filter((i) => i.applicationId !== id),
+      interviews: store.interviews.filter((iv) => iv.applicationId !== id),
     });
   }, []);
 
-  const getEvents = useCallback((applicationId: string) => {
-    const list = getStore().eventsByApplicationId[applicationId] ?? [];
-    return [...list].sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+  /* ── Reminders ─────────────────────────────────────────────────────────── */
+
+  const refreshReminders = useCallback(async () => {
+    setStore({ ...getStore(), remindersLoading: true });
+    try {
+      const reminders = await listRemindersApi();
+      setStore({ ...getStore(), reminders, remindersLoading: false });
+    } catch {
+      setStore({ ...getStore(), remindersLoading: false });
+    }
   }, []);
 
-  const getEventsLoading = useCallback(
-    (applicationId: string) =>
-      Boolean(getStore().eventsLoadingByApplicationId[applicationId]),
-    []
-  );
+  /** Returns reminders enriched with application data from the local app list. */
+  const getReminders = useCallback((applicationId?: string) => {
+    const store = getStore();
+    const list = applicationId
+      ? store.reminders.filter((r) => r.applicationId === applicationId)
+      : store.reminders;
 
-  const addEvent = useCallback(
-    async (
-      applicationId: string,
-      payload: CreateTimelineEventPayload
-    ): Promise<TimelineEvent> => {
-      const body = createTimelinePayloadToApi(payload);
-      const raw = await createApplicationEvent(applicationId, body);
-      const event = eventFromApi(raw);
-      await refreshEvents(applicationId);
-      return event;
-    },
-    [refreshEvents]
-  );
-
-  const getReminders = useCallback(
-    (applicationId?: string) => {
-      const store = getStore();
-      return applicationId
-        ? store.reminders.filter((r) => r.applicationId === applicationId)
-        : store.reminders;
-    },
-    []
-  );
+    return list.map((r) => {
+      const app = r.applicationId
+        ? store.applications.find((a) => a.id === r.applicationId)
+        : undefined;
+      return {
+        ...r,
+        application: app
+          ? { id: app.id, jobTitle: app.jobTitle, company: app.company }
+          : r.application,
+      };
+    });
+  }, []);
 
   const createReminder = useCallback(
-    (
-      payload: Omit<
-        Reminder,
-        "id" | "userId" | "completed" | "createdAt" | "updatedAt"
-      >
-    ): Reminder => {
-      const now = new Date().toISOString();
-      const reminder: Reminder = {
-        ...payload,
-        id: `rem-${uuid()}`,
-        userId: "dev",
-        completed: false,
-        createdAt: now,
-        updatedAt: now,
-      };
+    async (payload: {
+      title: string;
+      description?: string;
+      dueDate: string;
+      applicationId: string;
+    }): Promise<Reminder> => {
+      const reminder = await createReminderApi({
+        applicationId: payload.applicationId,
+        title: payload.title,
+        description: payload.description,
+        dueDate: payload.dueDate,
+      });
       const store = getStore();
       setStore({ ...store, reminders: [reminder, ...store.reminders] });
       return reminder;
@@ -326,67 +282,85 @@ export function useApplicationStore() {
   );
 
   const updateReminder = useCallback(
-    (
+    async (
       id: string,
-      payload: Partial<
-        Pick<Reminder, "title" | "description" | "dueDate" | "completed">
-      >
-    ) => {
+      payload: { title?: string; description?: string; dueDate?: string; completed?: boolean }
+    ): Promise<Reminder> => {
+      const updated = await updateReminderApi(id, {
+        title: payload.title,
+        description: payload.description,
+        dueDate: payload.dueDate,
+        isCompleted: payload.completed,
+      });
       const store = getStore();
       setStore({
         ...store,
-        reminders: store.reminders.map((r) =>
-          r.id === id
-            ? { ...r, ...payload, updatedAt: new Date().toISOString() }
-            : r
-        ),
+        reminders: store.reminders.map((r) => (r.id === id ? updated : r)),
       });
+      return updated;
     },
     []
   );
 
-  const toggleReminder = useCallback((id: string) => {
+  const toggleReminder = useCallback(async (id: string): Promise<void> => {
+    const existing = getStore().reminders.find((r) => r.id === id);
+    if (!existing) return;
+    const updated = await updateReminderApi(id, { isCompleted: !existing.completed });
     const store = getStore();
     setStore({
       ...store,
-      reminders: store.reminders.map((r) =>
-        r.id === id
-          ? { ...r, completed: !r.completed, updatedAt: new Date().toISOString() }
-          : r
-      ),
+      reminders: store.reminders.map((r) => (r.id === id ? updated : r)),
     });
   }, []);
 
-  const deleteReminder = useCallback((id: string) => {
+  const deleteReminder = useCallback(async (id: string): Promise<void> => {
+    await deleteReminderApi(id);
     const store = getStore();
-    setStore({
-      ...store,
-      reminders: store.reminders.filter((r) => r.id !== id),
-    });
+    setStore({ ...store, reminders: store.reminders.filter((r) => r.id !== id) });
   }, []);
 
-  const getInterviews = useCallback(
-    (applicationId?: string) => {
-      const store = getStore();
-      return applicationId
-        ? store.interviews.filter((i) => i.applicationId === applicationId)
-        : store.interviews;
-    },
-    []
-  );
+  /* ── Interviews ────────────────────────────────────────────────────────── */
+
+  const refreshInterviews = useCallback(async () => {
+    setStore({ ...getStore(), interviewsLoading: true });
+    try {
+      const interviews = await listInterviewsApi();
+      setStore({ ...getStore(), interviews, interviewsLoading: false });
+    } catch {
+      setStore({ ...getStore(), interviewsLoading: false });
+    }
+  }, []);
+
+  /** Returns interviews enriched with application data from the local app list. */
+  const getInterviews = useCallback((applicationId?: string) => {
+    const store = getStore();
+    const list = applicationId
+      ? store.interviews.filter((iv) => iv.applicationId === applicationId)
+      : store.interviews;
+
+    return list.map((iv) => {
+      const app = store.applications.find((a) => a.id === iv.applicationId);
+      return {
+        ...iv,
+        application: app
+          ? { id: app.id, jobTitle: app.jobTitle, company: app.company }
+          : iv.application,
+      };
+    });
+  }, []);
 
   const createInterview = useCallback(
-    (
-      payload: Omit<Interview, "id" | "userId" | "createdAt" | "updatedAt">
-    ): Interview => {
-      const now = new Date().toISOString();
-      const interview: Interview = {
-        ...payload,
-        id: `int-${uuid()}`,
-        userId: "dev",
-        createdAt: now,
-        updatedAt: now,
-      };
+    async (payload: {
+      applicationId: string;
+      stage: InterviewStage;
+      type: InterviewType;
+      scheduledAt: string;
+      location?: string;
+      notes?: string;
+      outcome?: string;
+    }): Promise<Interview> => {
+      const body = interviewCreatePayloadToApi(payload);
+      const interview = await createInterviewApi(body);
       const store = getStore();
       setStore({ ...store, interviews: [interview, ...store.interviews] });
       return interview;
@@ -395,27 +369,36 @@ export function useApplicationStore() {
   );
 
   const updateInterview = useCallback(
-    (id: string, payload: Partial<Interview>) => {
+    async (
+      id: string,
+      payload: {
+        stage?: InterviewStage;
+        type?: InterviewType;
+        scheduledAt?: string;
+        location?: string;
+        notes?: string;
+        outcome?: string;
+      }
+    ): Promise<Interview> => {
+      const body = interviewUpdatePayloadToApi(payload);
+      const updated = await updateInterviewApi(id, body);
       const store = getStore();
       setStore({
         ...store,
-        interviews: store.interviews.map((i) =>
-          i.id === id
-            ? { ...i, ...payload, updatedAt: new Date().toISOString() }
-            : i
-        ),
+        interviews: store.interviews.map((iv) => (iv.id === id ? updated : iv)),
       });
+      return updated;
     },
     []
   );
 
-  const deleteInterview = useCallback((id: string) => {
+  const deleteInterview = useCallback(async (id: string): Promise<void> => {
+    await deleteInterviewApi(id);
     const store = getStore();
-    setStore({
-      ...store,
-      interviews: store.interviews.filter((i) => i.id !== id),
-    });
+    setStore({ ...store, interviews: store.interviews.filter((iv) => iv.id !== id) });
   }, []);
+
+  /* ── Reset ─────────────────────────────────────────────────────────────── */
 
   const resetStore = useCallback(() => {
     setStore({
@@ -424,8 +407,10 @@ export function useApplicationStore() {
       applicationsError: null,
       eventsByApplicationId: {},
       eventsLoadingByApplicationId: {},
-      reminders: MOCK_REMINDERS,
-      interviews: MOCK_INTERVIEWS,
+      reminders: [],
+      remindersLoading: false,
+      interviews: [],
+      interviewsLoading: false,
     });
   }, []);
 
@@ -433,7 +418,11 @@ export function useApplicationStore() {
     applications: getStore().applications,
     applicationsLoading: getStore().applicationsLoading,
     applicationsError: getStore().applicationsError,
+    remindersLoading: getStore().remindersLoading,
+    interviewsLoading: getStore().interviewsLoading,
     refreshApplications,
+    refreshReminders,
+    refreshInterviews,
     refreshEvents,
     ensureApplication,
     getApplications,

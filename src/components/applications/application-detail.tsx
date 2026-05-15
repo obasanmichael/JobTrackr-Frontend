@@ -95,11 +95,10 @@ function InlineReminderForm({
   async function onSubmit(data: QuickReminderForm) {
     setSubmitting(true);
     try {
-      const reminder = createReminder({
+      const reminder = await createReminder({
         title: data.title,
         dueDate: new Date(data.dueDate).toISOString(),
         applicationId,
-        application: { id: applicationId, jobTitle: "", company: applicationName },
       });
       await addEvent(applicationId, {
         type: "Reminder Created",
@@ -116,6 +115,7 @@ function InlineReminderForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-3 space-y-2.5 rounded-lg border border-border bg-muted/30 p-3" noValidate>
+      <p className="text-[11px] text-muted-foreground">Linked to: <span className="font-medium text-foreground">{applicationName}</span></p>
       <div className="space-y-1">
         <Label className="text-[11px]">Title</Label>
         <Input placeholder="e.g. Follow up with recruiter" className="h-8 text-[13px]" {...register("title")} />
@@ -144,22 +144,20 @@ function InlineReminderForm({
 const quickInterviewSchema = z.object({
   stage: z.enum(INTERVIEW_STAGES),
   type: z.enum(INTERVIEW_TYPES),
-  scheduledAt: z.string().optional(),
+  scheduledAt: z.string().min(1, "Date & time is required"),
 });
 type QuickInterviewForm = z.infer<typeof quickInterviewSchema>;
 
 function InlineInterviewForm({
   applicationId,
-  applicationData,
   onClose,
 }: {
   applicationId: string;
-  applicationData: { jobTitle: string; company: string };
   onClose: () => void;
 }) {
   const { createInterview, addEvent } = useApplicationStore();
   const [submitting, setSubmitting] = useState(false);
-  const { register, handleSubmit, setValue, watch } = useForm<QuickInterviewForm>({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<QuickInterviewForm>({
     resolver: zodResolver(quickInterviewSchema),
     defaultValues: { stage: "Technical Interview", type: "Video" },
   });
@@ -168,16 +166,16 @@ function InlineInterviewForm({
     const data = rawData as QuickInterviewForm;
     setSubmitting(true);
     try {
-      createInterview({
+      const scheduledAt = new Date(data.scheduledAt).toISOString();
+      await createInterview({
         applicationId,
-        application: { id: applicationId, ...applicationData },
         stage: data.stage,
         type: data.type,
-        scheduledAt: data.scheduledAt ? new Date(data.scheduledAt).toISOString() : undefined,
+        scheduledAt,
       });
       await addEvent(applicationId, {
         type: "Interview Update",
-        content: `Interview logged: ${data.stage} (${data.type})${data.scheduledAt ? ` on ${format(new Date(data.scheduledAt), "MMM d, h:mm a")}` : ""}`,
+        content: `Interview logged: ${data.stage} (${data.type}) on ${format(new Date(data.scheduledAt), "MMM d, h:mm a")}`,
       });
       toast.success("Interview logged");
       onClose();
@@ -210,8 +208,9 @@ function InlineInterviewForm({
         </Select>
       </div>
       <div className="space-y-1">
-        <Label className="text-[11px]">Date &amp; time (optional)</Label>
+        <Label className="text-[11px]">Date &amp; time <span className="text-destructive">*</span></Label>
         <Input type="datetime-local" className="h-8 text-[13px]" {...register("scheduledAt")} />
+        {errors.scheduledAt && <p className="text-xs text-destructive">{errors.scheduledAt.message}</p>}
       </div>
       <div className="flex gap-2">
         <Button type="submit" size="sm" className="h-7 text-xs" disabled={submitting}>
@@ -238,6 +237,8 @@ export function ApplicationDetail({ id }: ApplicationDetailProps) {
     deleteApplication,
     getReminders,
     getInterviews,
+    refreshReminders,
+    refreshInterviews,
   } = useApplicationStore();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showReminderForm, setShowReminderForm] = useState(false);
@@ -254,6 +255,11 @@ export function ApplicationDetail({ id }: ApplicationDetailProps) {
       cancelled = true;
     };
   }, [id, ensureApplication]);
+
+  useEffect(() => {
+    void refreshReminders();
+    void refreshInterviews();
+  }, [refreshReminders, refreshInterviews]);
 
   const application = applications.find((a) => a.id === id) ?? null;
 
@@ -522,7 +528,6 @@ export function ApplicationDetail({ id }: ApplicationDetailProps) {
               {showInterviewForm && (
                 <InlineInterviewForm
                   applicationId={id}
-                  applicationData={{ jobTitle: application.jobTitle, company: application.company }}
                   onClose={() => setShowInterviewForm(false)}
                 />
               )}

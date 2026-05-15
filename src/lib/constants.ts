@@ -35,6 +35,7 @@ export const INTERVIEW_STAGES = [
   "Hiring Manager Interview",
   "Final Interview",
   "Offer Discussion",
+  "Other",
 ] as const;
 export type InterviewStage = (typeof INTERVIEW_STAGES)[number];
 

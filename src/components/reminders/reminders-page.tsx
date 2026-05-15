@@ -20,6 +20,7 @@ import {
 import { format, parseISO, isToday, isTomorrow, isPast, isThisWeek } from "date-fns";
 import { toast } from "sonner";
 import { useApplicationStore } from "@/hooks/useApplicationStore";
+import { getApiErrorMessage } from "@/shared/lib/api-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,7 +43,7 @@ const reminderSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   dueDate: z.string().min(1, "Due date is required"),
-  applicationId: z.string().optional(),
+  applicationId: z.string().min(1, "Please link this reminder to an application"),
 });
 type ReminderForm = z.infer<typeof reminderSchema>;
 
@@ -86,7 +87,7 @@ function groupReminders(reminders: Reminder[]) {
   };
 }
 
-/* ─── Create reminder drawer/inline form ─────────────────────────────────── */
+/* ─── Create reminder form ───────────────────────────────────────────────── */
 
 interface CreateReminderFormProps {
   onClose: () => void;
@@ -102,21 +103,16 @@ function CreateReminderForm({ onClose }: CreateReminderFormProps) {
   async function onSubmit(data: ReminderForm) {
     setIsSubmitting(true);
     try {
-      const app = data.applicationId
-        ? applications.find((a) => a.id === data.applicationId)
-        : undefined;
-
-      createReminder({
+      await createReminder({
         title: data.title,
         description: data.description,
         dueDate: new Date(data.dueDate).toISOString(),
-        applicationId: data.applicationId || undefined,
-        application: app
-          ? { id: app.id, jobTitle: app.jobTitle, company: app.company }
-          : undefined,
+        applicationId: data.applicationId,
       });
       toast.success("Reminder created");
       onClose();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -157,14 +153,13 @@ function CreateReminderForm({ onClose }: CreateReminderFormProps) {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-[13px]">Link to application</Label>
+              <Label className="text-[13px]">Application <span className="text-destructive">*</span></Label>
               {/* eslint-disable-next-line react-hooks/incompatible-library */}
-              <Select value={watch("applicationId")} onValueChange={(v) => setValue("applicationId", v === "none" ? "" : v)}>
+              <Select value={watch("applicationId")} onValueChange={(v) => setValue("applicationId", v)}>
                 <SelectTrigger className="text-[13px]">
-                  <SelectValue placeholder="None" />
+                  <SelectValue placeholder="Select application" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
                   {applications.map((a) => (
                     <SelectItem key={a.id} value={a.id} className="text-[13px]">
                       {a.company} — {a.jobTitle}
@@ -172,6 +167,7 @@ function CreateReminderForm({ onClose }: CreateReminderFormProps) {
                   ))}
                 </SelectContent>
               </Select>
+              {errors.applicationId && <p className="text-xs text-destructive">{errors.applicationId.message}</p>}
             </div>
           </div>
 
@@ -217,13 +213,15 @@ function ReminderRow({ reminder }: { reminder: Reminder }) {
   async function onEditSubmit(data: EditReminderForm) {
     setSubmitting(true);
     try {
-      updateReminder(reminder.id, {
+      await updateReminder(reminder.id, {
         title: data.title,
         description: data.description,
         dueDate: new Date(data.dueDate).toISOString(),
       });
       toast.success("Reminder updated");
       setEditing(false);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -276,9 +274,13 @@ function ReminderRow({ reminder }: { reminder: Reminder }) {
     >
       {/* Complete toggle */}
       <button
-        onClick={() => {
-          toggleReminder(reminder.id);
-          toast.success(reminder.completed ? "Marked incomplete" : "Reminder completed");
+        onClick={async () => {
+          try {
+            await toggleReminder(reminder.id);
+            toast.success(reminder.completed ? "Marked incomplete" : "Reminder completed");
+          } catch (err) {
+            toast.error(getApiErrorMessage(err));
+          }
         }}
         className={cn(
           "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
@@ -326,7 +328,14 @@ function ReminderRow({ reminder }: { reminder: Reminder }) {
           <Pencil className="h-3.5 w-3.5" />
         </button>
         <button
-          onClick={() => { deleteReminder(reminder.id); toast.success("Reminder deleted"); }}
+          onClick={async () => {
+            try {
+              await deleteReminder(reminder.id);
+              toast.success("Reminder deleted");
+            } catch (err) {
+              toast.error(getApiErrorMessage(err));
+            }
+          }}
           className="text-muted-foreground transition-colors hover:text-destructive"
           aria-label="Delete reminder"
         >
@@ -381,12 +390,13 @@ function ReminderGroup({
 /* ─── Main page ──────────────────────────────────────────────────────────── */
 
 export function RemindersPage() {
-  const { getReminders, refreshApplications } = useApplicationStore();
+  const { getReminders, refreshApplications, refreshReminders } = useApplicationStore();
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     void refreshApplications();
-  }, [refreshApplications]);
+    void refreshReminders();
+  }, [refreshApplications, refreshReminders]);
 
   const allReminders = getReminders();
   const { overdue, upcoming, completed } = useMemo(() => groupReminders(allReminders), [allReminders]);

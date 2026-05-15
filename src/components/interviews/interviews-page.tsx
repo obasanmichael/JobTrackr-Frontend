@@ -21,6 +21,7 @@ import {
 import { format, parseISO, isFuture, isToday } from "date-fns";
 import { toast } from "sonner";
 import { useApplicationStore } from "@/hooks/useApplicationStore";
+import { getApiErrorMessage } from "@/shared/lib/api-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,7 +46,7 @@ const interviewSchema = z.object({
   applicationId: z.string().min(1, "Application is required"),
   stage: z.enum(INTERVIEW_STAGES),
   type: z.enum(INTERVIEW_TYPES),
-  scheduledAt: z.string().optional(),
+  scheduledAt: z.string().min(1, "Scheduled date & time is required"),
   location: z.string().optional(),
   notes: z.string().optional(),
   outcome: z.string().optional(),
@@ -101,28 +102,33 @@ function InterviewFormPanel({ existing, onClose }: InterviewFormPanelProps) {
     const data = rawData as InterviewForm;
     setIsSubmitting(true);
     try {
-      const app = applications.find((a) => a.id === data.applicationId);
-      const payload = {
-        applicationId: data.applicationId,
-        application: app
-          ? { id: app.id, jobTitle: app.jobTitle, company: app.company }
-          : undefined,
-        stage: data.stage,
-        type: data.type,
-        scheduledAt: data.scheduledAt ? new Date(data.scheduledAt).toISOString() : undefined,
-        location: data.location || undefined,
-        notes: data.notes || undefined,
-        outcome: data.outcome || undefined,
-      };
+      const scheduledAt = new Date(data.scheduledAt).toISOString();
 
       if (isEdit && existing) {
-        updateInterview(existing.id, payload);
+        await updateInterview(existing.id, {
+          stage: data.stage,
+          type: data.type,
+          scheduledAt,
+          location: data.location || undefined,
+          notes: data.notes || undefined,
+          outcome: data.outcome || undefined,
+        });
         toast.success("Interview updated");
       } else {
-        createInterview(payload);
+        await createInterview({
+          applicationId: data.applicationId,
+          stage: data.stage,
+          type: data.type,
+          scheduledAt,
+          location: data.location || undefined,
+          notes: data.notes || undefined,
+          outcome: data.outcome || undefined,
+        });
         toast.success("Interview added");
       }
       onClose();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -142,29 +148,31 @@ function InterviewFormPanel({ existing, onClose }: InterviewFormPanelProps) {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5" noValidate>
           {/* Application */}
-          <div className="space-y-1.5">
-            <Label className="text-[13px]">Application <span className="text-destructive">*</span></Label>
-            {/* eslint-disable-next-line react-hooks/incompatible-library */}
-            <Select value={watch("applicationId")} onValueChange={(v) => setValue("applicationId", v)}>
-              <SelectTrigger className="text-[13px]">
-                <SelectValue placeholder="Select application" />
-              </SelectTrigger>
-              <SelectContent>
-                {applications.map((a) => (
-                  <SelectItem key={a.id} value={a.id} className="text-[13px]">
-                    {a.company} — {a.jobTitle}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.applicationId && <p className="text-xs text-destructive">{errors.applicationId.message}</p>}
-          </div>
+          {!isEdit && (
+            <div className="space-y-1.5">
+              <Label className="text-[13px]">Application <span className="text-destructive">*</span></Label>
+              {/* eslint-disable-next-line react-hooks/incompatible-library */}
+              <Select value={watch("applicationId")} onValueChange={(v) => setValue("applicationId", v)}>
+                <SelectTrigger className="text-[13px]">
+                  <SelectValue placeholder="Select application" />
+                </SelectTrigger>
+                <SelectContent>
+                  {applications.map((a) => (
+                    <SelectItem key={a.id} value={a.id} className="text-[13px]">
+                      {a.company} — {a.jobTitle}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.applicationId && <p className="text-xs text-destructive">{errors.applicationId.message}</p>}
+            </div>
+          )}
 
           {/* Stage + Type */}
           <div className="grid gap-3.5 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-[13px]">Stage</Label>
-            <Select value={watch("stage")} onValueChange={(v) => setValue("stage", v as InterviewStage)}>
+              <Select value={watch("stage")} onValueChange={(v) => setValue("stage", v as InterviewStage)}>
                 <SelectTrigger className="text-[13px]">
                   <SelectValue />
                 </SelectTrigger>
@@ -178,7 +186,7 @@ function InterviewFormPanel({ existing, onClose }: InterviewFormPanelProps) {
 
             <div className="space-y-1.5">
               <Label className="text-[13px]">Type</Label>
-            <Select value={watch("type")} onValueChange={(v) => setValue("type", v as InterviewType)}>
+              <Select value={watch("type")} onValueChange={(v) => setValue("type", v as InterviewType)}>
                 <SelectTrigger className="text-[13px]">
                   <SelectValue />
                 </SelectTrigger>
@@ -194,8 +202,9 @@ function InterviewFormPanel({ existing, onClose }: InterviewFormPanelProps) {
           {/* Date + location */}
           <div className="grid gap-3.5 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label className="text-[13px]">Date &amp; time</Label>
+              <Label className="text-[13px]">Date &amp; time <span className="text-destructive">*</span></Label>
               <Input type="datetime-local" className="text-[13px]" {...register("scheduledAt")} />
+              {errors.scheduledAt && <p className="text-xs text-destructive">{errors.scheduledAt.message}</p>}
             </div>
             <div className="space-y-1.5">
               <Label className="text-[13px]">Location / link</Label>
@@ -355,7 +364,15 @@ function InterviewCard({ interview }: { interview: Interview }) {
           ) : (
             <div className="flex items-center gap-1 rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1">
               <button
-                onClick={() => { deleteInterview(interview.id); toast.success("Interview deleted"); }}
+                onClick={async () => {
+                  try {
+                    await deleteInterview(interview.id);
+                    toast.success("Interview deleted");
+                  } catch (err) {
+                    toast.error(getApiErrorMessage(err));
+                    setConfirmDelete(false);
+                  }
+                }}
                 className="text-[11px] font-semibold text-destructive hover:underline"
               >
                 Delete
@@ -413,12 +430,13 @@ function InterviewGroup({
 /* ─── Main page ──────────────────────────────────────────────────────────── */
 
 export function InterviewsPage() {
-  const { getInterviews, refreshApplications } = useApplicationStore();
+  const { getInterviews, refreshApplications, refreshInterviews } = useApplicationStore();
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     void refreshApplications();
-  }, [refreshApplications]);
+    void refreshInterviews();
+  }, [refreshApplications, refreshInterviews]);
 
   const allInterviews = getInterviews();
 
