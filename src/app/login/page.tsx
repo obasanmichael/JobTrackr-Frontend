@@ -1,28 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff, Loader2, BriefcaseBusiness } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
-import { getApiErrorMessage } from "@/lib/api";
+import { useAuth } from "@/features/auth/hooks/use-auth";
+import { getApiErrorMessage } from "@/shared/lib/api-errors";
+import { getSafeInternalRedirectPath } from "@/shared/lib/safe-redirect-path";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 type LoginForm = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
-  const { login } = useAuth();
+function LoginPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { login, user, ready } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (ready && user) {
+      router.replace("/dashboard");
+    }
+  }, [ready, user, router]);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -31,7 +41,8 @@ export default function LoginPage() {
   async function onSubmit(data: LoginForm) {
     setIsLoading(true);
     try {
-      await login(data);
+      const next = getSafeInternalRedirectPath(searchParams.get("next"));
+      await login(data, next);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
@@ -136,5 +147,19 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
   );
 }

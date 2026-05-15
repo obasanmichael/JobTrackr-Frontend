@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff, Loader2, BriefcaseBusiness } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
-import { getApiErrorMessage } from "@/lib/api";
+import { useAuth } from "@/features/auth/hooks/use-auth";
+import { getApiErrorMessage } from "@/shared/lib/api-errors";
+import { getSafeInternalRedirectPath } from "@/shared/lib/safe-redirect-path";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,8 +28,16 @@ const registerSchema = z
   });
 type RegisterForm = z.infer<typeof registerSchema>;
 
-export default function RegisterPage() {
-  const { register: registerUser } = useAuth();
+function RegisterPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { register: registerUser, user, ready } = useAuth();
+
+  useEffect(() => {
+    if (ready && user) {
+      router.replace("/dashboard");
+    }
+  }, [ready, user, router]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +49,8 @@ export default function RegisterPage() {
   async function onSubmit({ name, email, password }: RegisterForm) {
     setIsLoading(true);
     try {
-      await registerUser({ name, email, password });
+      const next = getSafeInternalRedirectPath(searchParams.get("next"));
+      await registerUser({ name, email, password }, next);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
@@ -189,5 +200,19 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <RegisterPageContent />
+    </Suspense>
   );
 }

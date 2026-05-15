@@ -1,7 +1,7 @@
 "use client";
 
 import { LogOut, ChevronDown, Menu } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
