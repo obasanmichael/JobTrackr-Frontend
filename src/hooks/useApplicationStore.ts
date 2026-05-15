@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  MOCK_TIMELINE_EVENTS,
-  MOCK_REMINDERS,
-  MOCK_INTERVIEWS,
-} from "@/lib/mock-data";
+import { MOCK_REMINDERS, MOCK_INTERVIEWS } from "@/lib/mock-data";
 import {
   createApplication as createApplicationApi,
   deleteApplication as deleteApplicationApi,
@@ -13,6 +9,14 @@ import {
   listApplications,
   updateApplication as updateApplicationApi,
 } from "@/features/job-seeker/applications/api/applications-api";
+import {
+  createApplicationEvent,
+  listApplicationEvents,
+} from "@/features/job-seeker/applications/api/application-events-api";
+import {
+  createTimelinePayloadToApi,
+  eventFromApi,
+} from "@/features/job-seeker/applications/lib/timeline-mappers";
 import type {
   Application,
   TimelineEvent,
@@ -29,15 +33,15 @@ interface Store {
   applications: Application[];
   applicationsLoading: boolean;
   applicationsError: string | null;
-  events: TimelineEvent[];
+  eventsByApplicationId: Record<string, TimelineEvent[]>;
+  eventsLoadingByApplicationId: Record<string, boolean>;
   reminders: Reminder[];
   interviews: Interview[];
 }
 
-function loadDevSlice(): Pick<Store, "events" | "reminders" | "interviews"> {
+function loadDevSlice(): Pick<Store, "reminders" | "interviews"> {
   if (typeof window === "undefined") {
     return {
-      events: MOCK_TIMELINE_EVENTS,
       reminders: MOCK_REMINDERS,
       interviews: MOCK_INTERVIEWS,
     };
@@ -46,20 +50,17 @@ function loadDevSlice(): Pick<Store, "events" | "reminders" | "interviews"> {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       return {
-        events: MOCK_TIMELINE_EVENTS,
         reminders: MOCK_REMINDERS,
         interviews: MOCK_INTERVIEWS,
       };
     }
     const parsed = JSON.parse(raw) as Partial<Store>;
     return {
-      events: parsed.events ?? MOCK_TIMELINE_EVENTS,
       reminders: parsed.reminders ?? MOCK_REMINDERS,
       interviews: parsed.interviews ?? MOCK_INTERVIEWS,
     };
   } catch {
     return {
-      events: MOCK_TIMELINE_EVENTS,
       reminders: MOCK_REMINDERS,
       interviews: MOCK_INTERVIEWS,
     };
@@ -71,7 +72,6 @@ function saveDevSlice(store: Store) {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
-        events: store.events,
         reminders: store.reminders,
         interviews: store.interviews,
       })
@@ -91,6 +91,8 @@ let _store: Store = {
   applications: [],
   applicationsLoading: false,
   applicationsError: null,
+  eventsByApplicationId: {},
+  eventsLoadingByApplicationId: {},
   ...loadDevSlice(),
 };
 const _listeners = new Set<() => void>();
@@ -139,6 +141,42 @@ export function useApplicationStore() {
     }
   }, []);
 
+  const refreshEvents = useCallback(async (applicationId: string) => {
+    const store = getStore();
+    setStore({
+      ...store,
+      eventsLoadingByApplicationId: {
+        ...store.eventsLoadingByApplicationId,
+        [applicationId]: true,
+      },
+    });
+    try {
+      const raw = await listApplicationEvents(applicationId);
+      const mapped = raw.map(eventFromApi);
+      const next = getStore();
+      setStore({
+        ...next,
+        eventsByApplicationId: {
+          ...next.eventsByApplicationId,
+          [applicationId]: mapped,
+        },
+        eventsLoadingByApplicationId: {
+          ...next.eventsLoadingByApplicationId,
+          [applicationId]: false,
+        },
+      });
+    } catch {
+      const next = getStore();
+      setStore({
+        ...next,
+        eventsLoadingByApplicationId: {
+          ...next.eventsLoadingByApplicationId,
+          [applicationId]: false,
+        },
+      });
+    }
+  }, []);
+
   const getApplications = useCallback(() => getStore().applications, []);
 
   const getApplication = useCallback(
@@ -165,23 +203,27 @@ export function useApplicationStore() {
   const createApplication = useCallback(
     async (payload: CreateApplicationPayload): Promise<Application> => {
       const app = await createApplicationApi(payload);
-      const now = new Date().toISOString();
-      const event: TimelineEvent = {
-        id: `ev-${uuid()}`,
-        applicationId: app.id,
-        type: "Status Change",
-        content: `Application created with status: ${app.status}`,
-        createdAt: now,
-      };
+      try {
+        await createApplicationEvent(app.id, {
+          type: "GENERAL_UPDATE",
+          title: "Application added",
+          description: `Now tracking ${app.jobTitle} at ${app.company} (${app.status}).`.slice(
+            0,
+            2000
+          ),
+        });
+      } catch {
+        /* timeline seed is best-effort */
+      }
+      await refreshEvents(app.id);
       const store = getStore();
       setStore({
         ...store,
         applications: [app, ...store.applications],
-        events: [event, ...store.events],
       });
       return app;
     },
-    []
+    [refreshEvents]
   );
 
   const updateApplication = useCallback(
@@ -193,66 +235,61 @@ export function useApplicationStore() {
       const existing = store.applications.find((a) => a.id === id);
       if (!existing) return null;
       const updated = await updateApplicationApi(id, payload);
-      const events = [...store.events];
-
-      if (payload.status && payload.status !== existing.status) {
-        events.unshift({
-          id: `ev-${uuid()}`,
-          applicationId: id,
-          type: "Status Change",
-          content: `Status changed from ${existing.status} → ${payload.status}`,
-          createdAt: new Date().toISOString(),
-        });
-      }
-
       setStore({
         ...store,
         applications: store.applications.map((a) => (a.id === id ? updated : a)),
-        events,
       });
+      if (payload.status && payload.status !== existing.status) {
+        await refreshEvents(id);
+      }
       return updated;
     },
-    []
+    [refreshEvents]
   );
 
   const deleteApplication = useCallback(async (id: string) => {
     await deleteApplicationApi(id);
     const store = getStore();
+    const eventsByApplicationId = { ...store.eventsByApplicationId };
+    delete eventsByApplicationId[id];
+    const eventsLoadingByApplicationId = { ...store.eventsLoadingByApplicationId };
+    delete eventsLoadingByApplicationId[id];
     setStore({
       ...store,
       applications: store.applications.filter((a) => a.id !== id),
-      events: store.events.filter((e) => e.applicationId !== id),
+      eventsByApplicationId,
+      eventsLoadingByApplicationId,
       reminders: store.reminders.filter((r) => r.applicationId !== id),
       interviews: store.interviews.filter((i) => i.applicationId !== id),
     });
   }, []);
 
-  const getEvents = useCallback(
+  const getEvents = useCallback((applicationId: string) => {
+    const list = getStore().eventsByApplicationId[applicationId] ?? [];
+    return [...list].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, []);
+
+  const getEventsLoading = useCallback(
     (applicationId: string) =>
-      getStore()
-        .events.filter((e) => e.applicationId === applicationId)
-        .sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        ),
+      Boolean(getStore().eventsLoadingByApplicationId[applicationId]),
     []
   );
 
   const addEvent = useCallback(
-    (applicationId: string, payload: CreateTimelineEventPayload): TimelineEvent => {
-      const now = new Date().toISOString();
-      const event: TimelineEvent = {
-        id: `ev-${uuid()}`,
-        applicationId,
-        type: payload.type,
-        content: payload.content,
-        createdAt: now,
-      };
-      const store = getStore();
-      setStore({ ...store, events: [event, ...store.events] });
+    async (
+      applicationId: string,
+      payload: CreateTimelineEventPayload
+    ): Promise<TimelineEvent> => {
+      const body = createTimelinePayloadToApi(payload);
+      const raw = await createApplicationEvent(applicationId, body);
+      const event = eventFromApi(raw);
+      await refreshEvents(applicationId);
       return event;
     },
-    []
+    [refreshEvents]
   );
 
   const getReminders = useCallback(
@@ -385,7 +422,8 @@ export function useApplicationStore() {
       applications: [],
       applicationsLoading: false,
       applicationsError: null,
-      events: MOCK_TIMELINE_EVENTS,
+      eventsByApplicationId: {},
+      eventsLoadingByApplicationId: {},
       reminders: MOCK_REMINDERS,
       interviews: MOCK_INTERVIEWS,
     });
@@ -396,6 +434,7 @@ export function useApplicationStore() {
     applicationsLoading: getStore().applicationsLoading,
     applicationsError: getStore().applicationsError,
     refreshApplications,
+    refreshEvents,
     ensureApplication,
     getApplications,
     getApplication,
@@ -403,6 +442,7 @@ export function useApplicationStore() {
     updateApplication,
     deleteApplication,
     getEvents,
+    getEventsLoading,
     addEvent,
     getReminders,
     createReminder,

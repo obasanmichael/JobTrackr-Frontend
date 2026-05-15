@@ -6,12 +6,34 @@ import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
 import type { DashboardSummary } from "@/types";
 
 export default function DashboardPage() {
-  const { applications, getReminders, getInterviews, getEvents, refreshApplications } =
-    useApplicationStore();
+  const {
+    applications,
+    getReminders,
+    getInterviews,
+    getEvents,
+    refreshApplications,
+    refreshEvents,
+  } = useApplicationStore();
 
   useEffect(() => {
     void refreshApplications();
   }, [refreshApplications]);
+
+  const applicationIdsKey = useMemo(
+    () => applications.map((a) => a.id).sort().join(","),
+    [applications]
+  );
+
+  useEffect(() => {
+    if (!applicationIdsKey) return;
+    const ids = applicationIdsKey.split(",");
+    void Promise.all(ids.map((id) => refreshEvents(id)));
+  }, [applicationIdsKey, refreshEvents]);
+
+  const timelineDigest = applications
+    .flatMap((a) => getEvents(a.id))
+    .map((e) => `${e.id}:${e.createdAt}`)
+    .join("|");
 
   const summary = useMemo<DashboardSummary>(() => {
     const byStatus: Record<string, number> = {};
@@ -54,7 +76,8 @@ export default function DashboardPage() {
       upcomingInterviews,
       recentEvents,
     };
-  }, [applications, getReminders, getInterviews, getEvents]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- timelineDigest embeds getEvents output; getEvents ref is stable
+  }, [applications, timelineDigest, getReminders, getInterviews]);
 
   return <DashboardOverview summary={summary} applications={applications} />;
 }

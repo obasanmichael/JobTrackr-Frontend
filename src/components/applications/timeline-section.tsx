@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -15,7 +15,9 @@ import {
   Loader2,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { toast } from "sonner";
 import { useApplicationStore } from "@/hooks/useApplicationStore";
+import { getApiErrorMessage } from "@/shared/lib/api-errors";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -59,10 +61,16 @@ interface TimelineSectionProps {
 }
 
 export function TimelineSection({ applicationId }: TimelineSectionProps) {
-  const { getEvents, addEvent } = useApplicationStore();
+  const { getEvents, addEvent, refreshEvents, getEventsLoading } =
+    useApplicationStore();
   const [showForm, setShowForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const events = getEvents(applicationId);
+  const loading = getEventsLoading(applicationId);
+
+  useEffect(() => {
+    void refreshEvents(applicationId);
+  }, [applicationId, refreshEvents]);
 
   const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<AddNoteForm>({
     resolver: zodResolver(addNoteSchema),
@@ -72,9 +80,11 @@ export function TimelineSection({ applicationId }: TimelineSectionProps) {
   async function onSubmit(data: AddNoteForm) {
     setIsSubmitting(true);
     try {
-      addEvent(applicationId, { type: data.type, content: data.content });
+      await addEvent(applicationId, { type: data.type, content: data.content });
       reset({ type: "Note", content: "" });
       setShowForm(false);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -144,7 +154,9 @@ export function TimelineSection({ applicationId }: TimelineSectionProps) {
       )}
 
       {/* Events list */}
-      {events.length === 0 ? (
+      {loading && events.length === 0 ? (
+        <p className="py-6 text-center text-sm text-muted-foreground">Loading timeline…</p>
+      ) : events.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">
           No timeline events yet.
         </p>

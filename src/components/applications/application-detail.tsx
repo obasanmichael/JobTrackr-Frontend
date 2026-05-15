@@ -101,12 +101,14 @@ function InlineReminderForm({
         applicationId,
         application: { id: applicationId, jobTitle: "", company: applicationName },
       });
-      addEvent(applicationId, {
+      await addEvent(applicationId, {
         type: "Reminder Created",
         content: `Reminder set: "${reminder.title}" — due ${format(parseISO(reminder.dueDate), "MMM d, yyyy")}`,
       });
       toast.success("Reminder created");
       onClose();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -173,12 +175,14 @@ function InlineInterviewForm({
         type: data.type,
         scheduledAt: data.scheduledAt ? new Date(data.scheduledAt).toISOString() : undefined,
       });
-      addEvent(applicationId, {
+      await addEvent(applicationId, {
         type: "Interview Update",
         content: `Interview logged: ${data.stage} (${data.type})${data.scheduledAt ? ` on ${format(new Date(data.scheduledAt), "MMM d, h:mm a")}` : ""}`,
       });
       toast.success("Interview logged");
       onClose();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
