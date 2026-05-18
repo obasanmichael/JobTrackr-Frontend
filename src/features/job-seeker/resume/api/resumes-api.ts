@@ -2,7 +2,12 @@ import { api } from "@/shared/lib/http-client";
 import { getPublicApiBaseUrl } from "@/shared/config/env";
 import { AUTH_STORAGE_KEYS } from "@/shared/config/auth-storage-keys";
 import { getResponseErrorMessage } from "@/shared/lib/response-errors";
-import type { CandidateProfile, Resume, UpdateCandidateProfilePayload } from "@/types";
+import type {
+  CandidateProfile,
+  Resume,
+  UpdateCandidateProfilePayload,
+  UpdateResumePayload,
+} from "@/types";
 import {
   type CandidateProfileApiRecord,
   type ResumeApiRecord,
@@ -30,9 +35,26 @@ export async function getResume(id: string): Promise<Resume> {
   return resumeFromApi(data);
 }
 
-export async function patchResumeActive(id: string, isActive: boolean): Promise<Resume> {
-  const { data } = await api.patch<ResumeApiRecord>(`/resumes/${id}`, { isActive });
+/** POST `/resumes/:id/set-active` — only one active resume per user. */
+export async function postResumeSetActive(id: string): Promise<Resume> {
+  const { data } = await api.post<ResumeApiRecord>(`/resumes/${id}/set-active`);
   return resumeFromApi(data);
+}
+
+/** POST `/resumes/:id/unarchive` — restore an archived resume to PARSED/FAILED/UPLOADED. */
+export async function postResumeUnarchive(id: string): Promise<Resume> {
+  const { data } = await api.post<ResumeApiRecord>(`/resumes/${id}/unarchive`);
+  return resumeFromApi(data);
+}
+
+/** PATCH `/resumes/:id` — e.g. `{ status: "ARCHIVED" }` or `{ isActive: false }`. */
+export async function updateResume(id: string, payload: UpdateResumePayload): Promise<Resume> {
+  const { data } = await api.patch<ResumeApiRecord>(`/resumes/${id}`, payload);
+  return resumeFromApi(data);
+}
+
+export async function deleteResume(id: string): Promise<void> {
+  await api.delete(`/resumes/${id}`);
 }
 
 export async function getCandidateProfile(resumeId: string): Promise<CandidateProfile> {

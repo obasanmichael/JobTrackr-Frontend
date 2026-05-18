@@ -1,21 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
-import { ArrowLeft, FileText } from "lucide-react";
+import { ArrowLeft, Archive, ArchiveRestore, FileText, MoreHorizontal, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ResumeStatusBadge } from "@/components/resume/resume-status-badge";
 import { CandidateProfileEditor } from "@/components/resume/candidate-profile-editor";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
+  deleteResume,
   getCandidateProfile,
   getResume,
+  postResumeSetActive,
+  postResumeUnarchive,
   updateCandidateProfile,
+  updateResume,
 } from "@/features/job-seeker/resume/api/resumes-api";
 import { getApiErrorMessage } from "@/shared/lib/api-errors";
 import { cn } from "@/lib/utils";
@@ -32,6 +45,7 @@ function formatBytes(n: number): string {
 
 export function ResumeDetailScreen() {
   const params = useParams();
+  const router = useRouter();
   const id = typeof params?.id === "string" ? params.id : "";
   const queryClient = useQueryClient();
 
@@ -64,6 +78,72 @@ export function ResumeDetailScreen() {
     },
     onError: (e: unknown) => toast.error(getApiErrorMessage(e)),
   });
+
+  const setActiveMutation = useMutation({
+    mutationFn: () => postResumeSetActive(id),
+    onSuccess: async () => {
+      toast.success("Set as active resume.");
+      await queryClient.invalidateQueries({ queryKey: ["resumes"] });
+      await queryClient.invalidateQueries({ queryKey: ["resume", id] });
+    },
+    onError: (e: unknown) => toast.error(getApiErrorMessage(e)),
+  });
+
+  const unarchiveMutation = useMutation({
+    mutationFn: () => postResumeUnarchive(id),
+    onSuccess: async () => {
+      toast.success("Resume restored to your library.");
+      await queryClient.invalidateQueries({ queryKey: ["resumes"] });
+      await queryClient.invalidateQueries({ queryKey: ["resume", id] });
+      await queryClient.invalidateQueries({ queryKey: ["resume-profile", id] });
+    },
+    onError: (e: unknown) => toast.error(getApiErrorMessage(e)),
+  });
+
+  const archiveMutation = useMutation({
+    mutationFn: () => updateResume(id, { status: "ARCHIVED" }),
+    onSuccess: async () => {
+      toast.success("Resume archived.");
+      await queryClient.invalidateQueries({ queryKey: ["resumes"] });
+      await queryClient.invalidateQueries({ queryKey: ["resume", id] });
+      queryClient.removeQueries({ queryKey: ["resume-profile", id] });
+    },
+    onError: (e: unknown) => toast.error(getApiErrorMessage(e)),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteResume(id),
+    onSuccess: async () => {
+      toast.success("Resume deleted.");
+      await queryClient.invalidateQueries({ queryKey: ["resumes"] });
+      queryClient.removeQueries({ queryKey: ["resume", id] });
+      queryClient.removeQueries({ queryKey: ["resume-profile", id] });
+      router.push("/dashboard/resume");
+    },
+    onError: (e: unknown) => toast.error(getApiErrorMessage(e)),
+  });
+
+  const resumeActionsBusy =
+    saveMutation.isPending ||
+    setActiveMutation.isPending ||
+    unarchiveMutation.isPending ||
+    archiveMutation.isPending ||
+    deleteMutation.isPending;
+
+  const [destructiveKind, setDestructiveKind] = useState<null | "archive" | "delete">(null);
+  const detailDestructivePending = archiveMutation.isPending || deleteMutation.isPending;
+
+  function closeDestructiveModal() {
+    setDestructiveKind(null);
+  }
+
+  function confirmDetailDestructive() {
+    if (destructiveKind === "archive") {
+      archiveMutation.mutate(undefined, { onSettled: () => closeDestructiveModal() });
+    } else if (destructiveKind === "delete") {
+      deleteMutation.mutate(undefined, { onSettled: () => closeDestructiveModal() });
+    }
+  }
 
   if (!id) {
     return (
@@ -101,11 +181,65 @@ export function ResumeDetailScreen() {
             title={resumeQuery.data.fileName}
             description={`Uploaded ${format(parseISO(resumeQuery.data.createdAt), "MMM d, yyyy • h:mm a")}`}
             action={
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/dashboard/resume/review">
-                  Continue to AI resume review
-                </Link>
-              </Button>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/dashboard/resume/review">AI resume review</Link>
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" disabled={resumeActionsBusy}>
+                      Actions
+                      <MoreHorizontal className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem
+                      disabled={
+                        resumeActionsBusy ||
+                        resumeQuery.data.status === "ARCHIVED" ||
+                        resumeQuery.data.status === "PARSING" ||
+                        resumeQuery.data.status === "UPLOADED" ||
+                        resumeQuery.data.isActive
+                      }
+                      onClick={() => setActiveMutation.mutate()}
+                    >
+                      Set as active resume
+                    </DropdownMenuItem>
+                    {resumeQuery.data.status === "ARCHIVED" ? (
+                      <DropdownMenuItem
+                        disabled={resumeActionsBusy}
+                        onClick={() => unarchiveMutation.mutate()}
+                        className="gap-2"
+                      >
+                        <ArchiveRestore className="h-4 w-4" />
+                        Unarchive resume
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem
+                        disabled={
+                          resumeActionsBusy ||
+                          resumeQuery.data.status === "PARSING" ||
+                          resumeQuery.data.status === "UPLOADED"
+                        }
+                        onClick={() => setDestructiveKind("archive")}
+                        className="gap-2"
+                      >
+                        <Archive className="h-4 w-4" />
+                        Archive resume
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="gap-2 text-destructive focus:text-destructive"
+                      disabled={resumeActionsBusy}
+                      onClick={() => setDestructiveKind("delete")}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete permanently
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             }
           />
 
@@ -135,7 +269,7 @@ export function ResumeDetailScreen() {
             </Card>
           )}
 
-          {resumeQuery.data.parsedText && resumeQuery.data.status === "PARSED" && (
+          {resumeQuery.data.parsedText && (
             <details className="group rounded-lg border border-border/80 bg-muted/20 p-4">
               <summary className="cursor-pointer text-sm font-medium text-foreground">
                 View extracted text
@@ -158,7 +292,11 @@ export function ResumeDetailScreen() {
               </p>
             </div>
 
-            {!canFetchProfile(resumeQuery.data.status) ? (
+            {resumeQuery.data.status === "ARCHIVED" ? (
+              <Card className="border-border/80 p-6 text-sm text-muted-foreground">
+                Candidate profile editing is unavailable for archived resumes.
+              </Card>
+            ) : !canFetchProfile(resumeQuery.data.status) ? (
               <Card className="border-border/80 p-6 text-sm text-muted-foreground">
                 The profile editor unlocks after parsing completes.
               </Card>
@@ -207,6 +345,26 @@ export function ResumeDetailScreen() {
           </section>
         </>
       ) : null}
+
+      <ConfirmDialog
+        open={destructiveKind !== null}
+        onOpenChange={(open) => {
+          if (!open && !detailDestructivePending) closeDestructiveModal();
+        }}
+        title={
+          destructiveKind === "delete" ? "Delete this resume?" : "Archive this resume?"
+        }
+        description={
+          destructiveKind === "delete"
+            ? "This removes the file and candidate profile permanently. You cannot undo this."
+            : "Archived resumes are removed from matching. You can still open this page until you delete the record."
+        }
+        confirmLabel={destructiveKind === "delete" ? "Delete permanently" : "Archive resume"}
+        cancelLabel="Cancel"
+        variant={destructiveKind === "delete" ? "destructive" : "default"}
+        isPending={detailDestructivePending}
+        onConfirm={confirmDetailDestructive}
+      />
     </div>
   );
 }
