@@ -241,6 +241,65 @@ export interface UpdateCandidateProfilePayload {
   isConfirmed?: boolean;
 }
 
+/* ─── AI resume reviews (V2B) ────────────────────────────────────────────── */
+
+export type ResumeReviewType = "GENERAL" | "JOB_SPECIFIC";
+export type ResumeReviewStatus = "PENDING" | "COMPLETED" | "FAILED";
+
+export interface ResumeReviewSuggestion {
+  section: string;
+  issue: string;
+  recommendation: string;
+}
+
+/** Normalized review row from `GET/POST /resume-reviews` */
+export interface ResumeReview {
+  id: string;
+  userId: string;
+  resumeId: string;
+  applicationId: string | null;
+  jobId: string | null;
+  type: ResumeReviewType;
+  overallScore: number | null;
+  atsScore: number | null;
+  keywordScore: number | null;
+  structureScore: number | null;
+  clarityScore: number | null;
+  strengths: unknown;
+  weaknesses: unknown;
+  missingKeywords: unknown;
+  suggestions: unknown;
+  improvedBullets: unknown;
+  summary: string | null;
+  status: ResumeReviewStatus;
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateResumeReviewPayload {
+  type: ResumeReviewType;
+  resumeId: string;
+  applicationId?: string;
+  jobId?: string;
+  jobDescription?: string;
+}
+
+export interface ListResumeReviewsQuery {
+  page?: number;
+  limit?: number;
+  resumeId?: string;
+  type?: ResumeReviewType;
+  status?: ResumeReviewStatus;
+}
+
+export interface ResumeReviewListResult {
+  items: ResumeReview[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface JobBoardListing {
   id: string;
   title: string;
