@@ -1,5 +1,8 @@
 export const APP_NAME = "JobTrackr";
 
+/** Mirrors backend `RESUME_UPLOAD_MAX_BYTES` default (5 MiB) */
+export const RESUME_UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
+
 export const APPLICATION_STATUSES = [
   "Saved",
   "Applied",
@@ -16,6 +19,14 @@ export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
 export const WORK_MODES = ["Remote", "Hybrid", "Onsite", "Unspecified"] as const;
 export type WorkMode = (typeof WORK_MODES)[number];
+
+/** Work mode filter values for aggregated job search (matches API `WorkMode`) */
+export const JOB_BOARD_WORK_MODE_API = [
+  { value: "UNSPECIFIED", label: "Any" },
+  { value: "REMOTE", label: "Remote" },
+  { value: "HYBRID", label: "Hybrid" },
+  { value: "ONSITE", label: "Onsite" },
+] as const;
 
 export const JOB_SOURCES = [
   "LinkedIn",

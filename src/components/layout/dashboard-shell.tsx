@@ -14,7 +14,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header onMenuClick={() => setSidebarOpen((v) => !v)} />
         <main className="flex-1 overflow-y-auto bg-background">
-          <div className="animate-page-in mx-auto max-w-5xl px-4 py-5 sm:px-6 sm:py-7">
+          <div className="animate-page-in mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-7">
             {children}
           </div>
         </main>
