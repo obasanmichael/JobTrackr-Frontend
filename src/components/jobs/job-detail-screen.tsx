@@ -13,22 +13,26 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { createApplication } from "@/features/job-seeker/applications/api/applications-api";
+import { convertSavedJob } from "@/features/job-seeker/jobs/api/saved-jobs-api";
 import {
   getJobById,
   getJobMatch,
 } from "@/features/job-seeker/jobs/api/jobs-api";
 import { jobDetailToCreateApplicationPayload } from "@/features/job-seeker/jobs/lib/job-mappers";
 import {
-  isJobSaved,
-  toggleSavedJobId,
-} from "@/features/job-seeker/jobs/lib/saved-jobs-storage";
+  fetchSavedJobsBookmarks,
+  findBookmarkForJobId,
+  isBookmarkedRow,
+  savedJobsBookmarksQueryKey,
+  toggleSavedJobBookmark,
+} from "@/features/job-seeker/jobs/lib/saved-jobs-hooks-support";
 import { getApiErrorMessage } from "@/shared/lib/api-errors";
 
 function formatLabel(value: string | null | undefined): string | null {
@@ -45,12 +49,23 @@ interface JobDetailScreenProps {
 export function JobDetailScreen({ jobId }: JobDetailScreenProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [saved, setSaved] = useState(() => isJobSaved(jobId));
 
   const jobQuery = useQuery({
     queryKey: ["jobs", "detail", jobId],
     queryFn: () => getJobById(jobId),
   });
+
+  const bookmarksQuery = useQuery({
+    queryKey: savedJobsBookmarksQueryKey(),
+    queryFn: () => fetchSavedJobsBookmarks(),
+    staleTime: 30_000,
+  });
+
+  const bookmarkRow = useMemo(
+    () => findBookmarkForJobId(bookmarksQuery.data?.items ?? [], jobId),
+    [bookmarksQuery.data?.items, jobId],
+  );
+  const saved = isBookmarkedRow(bookmarkRow);
 
   const matchQuery = useQuery({
     queryKey: ["jobs", "match", jobId],
@@ -59,17 +74,44 @@ export function JobDetailScreen({ jobId }: JobDetailScreenProps) {
     retry: false,
   });
 
+  const saveMutation = useMutation({
+    mutationFn: () => toggleSavedJobBookmark(jobId, bookmarkRow),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: savedJobsBookmarksQueryKey() });
+      toast.success(saved ? "Removed from saved jobs" : "Job saved");
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error));
+    },
+  });
+
   const trackMutation = useMutation({
     mutationFn: async () => {
       if (!jobQuery.data) {
         throw new Error("Job not loaded");
       }
-      return createApplication(jobDetailToCreateApplicationPayload(jobQuery.data));
+      if (bookmarkRow?.status === "CONVERTED_TO_APPLICATION" && bookmarkRow.convertedApplicationId) {
+        return {
+          kind: "already" as const,
+          applicationId: bookmarkRow.convertedApplicationId,
+        };
+      }
+      if (bookmarkRow?.status === "SAVED") {
+        const res = await convertSavedJob(bookmarkRow.id);
+        return { kind: "converted" as const, applicationId: res.application.id };
+      }
+      const application = await createApplication(jobDetailToCreateApplicationPayload(jobQuery.data));
+      return { kind: "created" as const, applicationId: application.id };
     },
-    onSuccess: (application) => {
-      toast.success("Added to your applications");
+    onSuccess: (result) => {
+      toast.success(
+        result.kind === "already"
+          ? "Already in your applications"
+          : "Added to your applications",
+      );
       void queryClient.invalidateQueries({ queryKey: ["applications"] });
-      router.push(`/dashboard/applications/${application.id}`);
+      void queryClient.invalidateQueries({ queryKey: savedJobsBookmarksQueryKey() });
+      router.push(`/dashboard/applications/${result.applicationId}`);
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error));
@@ -138,11 +180,8 @@ export function JobDetailScreen({ jobId }: JobDetailScreenProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                const next = toggleSavedJobId(jobId);
-                setSaved(next);
-                toast.success(next ? "Job saved" : "Removed from saved jobs");
-              }}
+              disabled={saveMutation.isPending || bookmarksQuery.isPending}
+              onClick={() => saveMutation.mutate()}
             >
               {saved ? (
                 <BookmarkCheck className="mr-2 h-4 w-4" />

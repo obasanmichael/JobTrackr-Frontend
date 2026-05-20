@@ -19,6 +19,10 @@ V2 expands JobTrackr from a job application tracker into a more complete job sea
 
 The web application remains the main full-featured product surface. Mobile remains a companion app. The backend remains the source of truth for data, permissions, subscriptions, matching, AI results, calendar integrations, and extension-created records.
 
+### 1.1 Phase letters vs backend V2 roadmap
+
+Letters like **Phase V2C**, **Phase V2D** in _this web plan_ describe **frontend deliverables** and may **not match** backend PRD lettering for the same symbol. **`Saved jobs` + convert-to-application** are implemented on the backend as **V2D** with incremental phases **`D.1`–`D.6`**; see **`job-trackr-backend/V2D_SAVED_JOBS_IMPLEMENTATION_PLAN.md`** (repository root from monorepo root: `job-trackr-backend/V2D_SAVED_JOBS_IMPLEMENTATION_PLAN.md`).
+
 ---
 
 ## 2. V2 Product Positioning

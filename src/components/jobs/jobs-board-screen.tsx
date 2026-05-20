@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
-import { ExternalLink, MapPin, PlusCircle, Search } from "lucide-react";
+import { Bookmark, BookmarkCheck, ExternalLink, MapPin, PlusCircle, Search } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -29,9 +29,29 @@ import {
   JOB_BOARD_POSTED_WITHIN_ANY,
   JOB_BOARD_WORK_MODE_API,
 } from "@/lib/constants";
+import {
+  findBookmarkForJobId,
+  fetchSavedJobsBookmarks,
+  isBookmarkedRow,
+  migrateLegacySavedJobIdsOnce,
+  savedJobsBookmarksQueryKey,
+  toggleSavedJobBookmark,
+  type SavedBookmarkRow,
+} from "@/features/job-seeker/jobs/lib/saved-jobs-hooks-support";
 import type { JobBoardListing } from "@/types";
 
-function JobCard({ job }: { job: JobBoardListing }) {
+function JobCard({
+  job,
+  bookmarkRow,
+  onToggleBookmark,
+  bookmarkBusy,
+}: {
+  job: JobBoardListing;
+  bookmarkRow: SavedBookmarkRow | undefined;
+  onToggleBookmark: () => void;
+  bookmarkBusy: boolean;
+}) {
+  const saved = isBookmarkedRow(bookmarkRow);
   const salaryParts =
     job.salaryMin != null || job.salaryMax != null
       ? [job.salaryMin, job.salaryMax].map((n) =>
@@ -83,6 +103,25 @@ function JobCard({ job }: { job: JobBoardListing }) {
         <p className="line-clamp-3 text-xs text-muted-foreground">{job.excerpt}</p>
       ) : null}
       <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-fit"
+          disabled={bookmarkBusy}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleBookmark();
+          }}
+        >
+          {saved ? (
+            <BookmarkCheck className="mr-2 h-3.5 w-3.5" />
+          ) : (
+            <Bookmark className="mr-2 h-3.5 w-3.5" />
+          )}
+          {saved ? "Saved" : "Save"}
+        </Button>
         <Button variant="secondary" size="sm" className="w-fit" asChild>
           <Link href={`/dashboard/jobs/${job.id}`}>View details</Link>
         </Button>
@@ -110,6 +149,8 @@ type FilterFormState = {
 };
 
 export function JobsBoardScreen() {
+  const queryClient = useQueryClient();
+  const migrationRan = useRef(false);
   const [form, setForm] = useState<FilterFormState>({
     q: "",
     location: "",
@@ -152,6 +193,30 @@ export function JobsBoardScreen() {
     }
     return params;
   }, [submittedFilters]);
+
+  const bookmarksQuery = useQuery({
+    queryKey: savedJobsBookmarksQueryKey(),
+    queryFn: () => fetchSavedJobsBookmarks(),
+    staleTime: 30_000,
+  });
+
+  useEffect(() => {
+    if (migrationRan.current) {
+      return;
+    }
+    migrationRan.current = true;
+    void migrateLegacySavedJobIdsOnce().then(() =>
+      queryClient.invalidateQueries({ queryKey: savedJobsBookmarksQueryKey() }),
+    );
+  }, [queryClient]);
+
+  const bookmarkToggleMutation = useMutation({
+    mutationFn: async ({ jobId, row }: { jobId: string; row: SavedBookmarkRow | undefined }) =>
+      toggleSavedJobBookmark(jobId, row),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: savedJobsBookmarksQueryKey() });
+    },
+  });
 
   const jobsQuery = useQuery({
     queryKey: ["jobs", queryParams],
@@ -330,7 +395,20 @@ export function JobsBoardScreen() {
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             {jobsQuery.data?.jobs.map((job) => (
-              <JobCard key={job.id} job={job} />
+              <JobCard
+                key={job.id}
+                job={job}
+                bookmarkRow={findBookmarkForJobId(bookmarksQuery.data?.items ?? [], job.id)}
+                bookmarkBusy={
+                  bookmarksQuery.isPending || bookmarkToggleMutation.isPending
+                }
+                onToggleBookmark={() =>
+                  bookmarkToggleMutation.mutate({
+                    jobId: job.id,
+                    row: findBookmarkForJobId(bookmarksQuery.data?.items ?? [], job.id),
+                  })
+                }
+              />
             ))}
           </div>
         </div>
