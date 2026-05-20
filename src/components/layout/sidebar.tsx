@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import {
+  Building2,
   BriefcaseBusiness,
   LayoutDashboard,
   Briefcase,
@@ -39,6 +40,11 @@ const NAV_SECTIONS: NavSection[] = [
     title: "Discover",
     items: [
       { label: "Jobs", href: "/dashboard/jobs", icon: Search },
+      {
+        label: "Submit careers page",
+        href: "/dashboard/jobs/submit",
+        icon: Building2,
+      },
       {
         label: "Matched Jobs",
         href: "/dashboard/matches",

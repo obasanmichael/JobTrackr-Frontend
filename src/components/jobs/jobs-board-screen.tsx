@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
-import { ExternalLink, MapPin, Search } from "lucide-react";
+import { ExternalLink, MapPin, PlusCircle, Search } from "lucide-react";
+import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -124,6 +125,14 @@ export function JobsBoardScreen() {
       <PageHeader
         title="Jobs"
         description="Discover roles aggregated from linked boards once ingestion is wired. Filters call your backend contract today so the UX stays aligned with future data."
+        action={
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/dashboard/jobs/submit">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Submit careers page
+            </Link>
+          </Button>
+        }
       />
 
       <Card className="space-y-4 border-border/80 p-5">

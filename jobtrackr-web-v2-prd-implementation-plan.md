@@ -204,6 +204,7 @@ Track
 
 Discover
 - Jobs
+- Submit careers page
 - Matched Jobs
 - Job Alerts
 
@@ -669,6 +670,43 @@ Acceptance criteria:
 - User can save jobs
 - Empty/loading/error states exist
 - Job source is visible
+
+---
+
+## 9.4.1 Submit Careers Page
+
+Route:
+
+```txt
+/dashboard/jobs/submit
+```
+
+Purpose:
+
+Let users suggest a company careers / ATS board for admin review and ingestion (Phase I organic source growth).
+
+Form fields:
+
+- company name (required)
+- careers page URL (required, http/https)
+- submitter email (optional; prefilled from account when logged in)
+
+Success state:
+
+- confirmation message
+- detected ATS type + slug when auto-detected
+- link back to Jobs search
+
+Errors:
+
+- 409 duplicate pending URL
+- 429 rate limit
+
+Acceptance criteria:
+
+- User can submit from Discover nav or Jobs page CTA
+- Valid URLs reach backend `POST /job-source-submissions`
+- Success UI shows detection result when available
 
 ---
 
@@ -1172,6 +1210,8 @@ Build job discovery and AI matching surfaces.
 12. Build missing skills/reason display
 13. Build job alert preferences UI
 14. Add empty state prompting resume upload if needed
+15. Add `/dashboard/jobs/submit` careers page submission form (Phase I)
+16. Wire submit form to `POST /job-source-submissions` with success + 409 handling
 
 ### Acceptance criteria
 
@@ -1182,6 +1222,7 @@ User can save jobs
 User can create application from job
 User can see matched jobs
 User can see match reasons and gaps
+User can submit a careers page for review
 ```
 
 ---
