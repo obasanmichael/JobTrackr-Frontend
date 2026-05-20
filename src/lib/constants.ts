@@ -28,6 +28,26 @@ export const JOB_BOARD_WORK_MODE_API = [
   { value: "ONSITE", label: "Onsite" },
 ] as const;
 
+/** Experience level filter values (matches API `ExternalExperienceLevel`) */
+export const JOB_BOARD_EXPERIENCE_LEVEL_API = [
+  { value: "UNSPECIFIED", label: "Any level" },
+  { value: "ENTRY", label: "Entry" },
+  { value: "MID", label: "Mid" },
+  { value: "SENIOR", label: "Senior" },
+  { value: "LEAD", label: "Lead" },
+  { value: "EXECUTIVE", label: "Executive" },
+] as const;
+
+/** Posted-within filter values (matches API `postedWithin`; use ANY to omit the param). */
+export const JOB_BOARD_POSTED_WITHIN_ANY = "ANY" as const;
+
+export const JOB_BOARD_POSTED_WITHIN_API = [
+  { value: JOB_BOARD_POSTED_WITHIN_ANY, label: "Any time" },
+  { value: "7", label: "Last 7 days" },
+  { value: "30", label: "Last 30 days" },
+  { value: "90", label: "Last 90 days" },
+] as const;
+
 export const JOB_SOURCES = [
   "LinkedIn",
   "Company Website",

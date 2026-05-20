@@ -311,8 +311,43 @@ export interface JobBoardListing {
   salaryMax?: number | null;
   currency?: string | null;
   source?: string | null;
+  sourceMeta?: JobListingSourceMeta | null;
   postedAt?: string | null;
   excerpt?: string | null;
+}
+
+export interface JobListingSourceMeta {
+  name: string;
+  type: string;
+}
+
+export interface JobBoardDetail extends JobBoardListing {
+  description?: string | null;
+  requirements?: string | null;
+  experienceLevel?: string | null;
+  employmentType?: string | null;
+  country?: string | null;
+}
+
+export interface JobSingleMatch {
+  overallScore: number;
+  matchReason: string;
+  matchedSkills: string[];
+  missingSkills: string[];
+  requiresProfile: boolean;
+  titleScore: number;
+  skillScore: number;
+  experienceScore: number;
+  locationScore: number;
+  recencyScore: number;
+  job: JobBoardListing;
+}
+
+export interface MatchedJobsResult {
+  matches: JobSingleMatch[];
+  total: number;
+  requiresProfile: boolean;
+  generatedAt?: string | null;
 }
 
 export interface JobSearchResult {
