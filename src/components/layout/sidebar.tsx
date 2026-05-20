@@ -18,9 +18,12 @@ import {
   Settings,
   X,
   Target,
+  Database,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/features/auth";
+import { isAdminUser } from "@/shared/config/admin";
 
 type NavItem = { label: string; href: string; icon: LucideIcon; exact?: boolean };
 
@@ -80,6 +83,24 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const showAdminNav = isAdminUser(user?.id);
+
+  const navSections = showAdminNav
+    ? [
+        ...NAV_SECTIONS,
+        {
+          title: "Admin",
+          items: [
+            {
+              label: "Job sources",
+              href: "/dashboard/admin/job-sources",
+              icon: Database,
+            },
+          ],
+        },
+      ]
+    : NAV_SECTIONS;
 
   useEffect(() => {
     onClose();
@@ -118,7 +139,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-4">
-        {NAV_SECTIONS.map((section) => (
+        {navSections.map((section) => (
           <div key={section.title}>
             <p className="mb-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-widest text-sidebar-muted">
               {section.title}
