@@ -75,19 +75,6 @@ export function ProfileSettingsCard() {
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="profile-email">Email</Label>
-          <Input
-            id="profile-email"
-            value={user?.email ?? ""}
-            disabled
-            readOnly
-          />
-          <p className="text-xs text-muted-foreground">
-            Email changes are not available yet.
-          </p>
-        </div>
-
         <Button
           type="button"
           size="sm"

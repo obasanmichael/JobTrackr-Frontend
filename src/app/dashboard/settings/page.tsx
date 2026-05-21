@@ -4,6 +4,7 @@ import { useTheme } from "next-themes";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { useMounted } from "@/hooks/useMounted";
 import { ProfileSettingsCard } from "@/components/settings/profile-settings-card";
+import { SecuritySettingsCard } from "@/components/settings/security-settings-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { LogOut, Palette, Sun, Moon, Monitor } from "lucide-react";
@@ -31,6 +32,8 @@ export default function SettingsPage() {
 
       <div className="space-y-4">
         <ProfileSettingsCard />
+
+        <SecuritySettingsCard />
 
         <Card>
           <CardHeader>
