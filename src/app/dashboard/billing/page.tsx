@@ -1,19 +1,20 @@
-import { PageHeader } from "@/components/ui/page-header";
-import { EmptyState } from "@/components/ui/empty-state";
-import { CreditCard } from "lucide-react";
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
+import { BillingScreen } from "@/components/billing/billing-screen";
 
-export default function BillingPlaceholderPage() {
+function BillingLoadingFallback() {
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Billing"
-        description="Plan, entitlements, and beta status will surface once billing endpoints expose live data."
-      />
-      <EmptyState
-        icon={CreditCard}
-        title="Beta access"
-        description="JobTrackr is free during beta. Future paid tiers and usage limits appear here alongside feature entitlements like AI review quotas."
-      />
+    <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground">
+      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      Loading billing…
     </div>
+  );
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={<BillingLoadingFallback />}>
+      <BillingScreen />
+    </Suspense>
   );
 }
