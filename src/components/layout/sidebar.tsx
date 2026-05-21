@@ -18,12 +18,11 @@ import {
   Settings,
   X,
   Target,
-  Database,
+  Shield,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/features/auth";
-import { isAdminUser } from "@/shared/config/admin";
+import { useAdminNavEligible } from "@/features/admin/hooks/use-admin-nav-eligible";
 
 type NavItem = { label: string; href: string; icon: LucideIcon; exact?: boolean };
 
@@ -83,8 +82,7 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { user } = useAuth();
-  const showAdminNav = isAdminUser(user?.id);
+  const { showAdminNav } = useAdminNavEligible();
 
   const navSections = showAdminNav
     ? [
@@ -93,9 +91,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           title: "Admin",
           items: [
             {
-              label: "Job sources",
-              href: "/dashboard/admin/job-sources",
-              icon: Database,
+              label: "Admin console",
+              href: "/admin",
+              icon: Shield,
+              exact: true,
             },
           ],
         },

@@ -1,5 +1,5 @@
-import { JobSourcesAdminScreen } from "@/components/admin/job-sources-admin-screen";
+import { redirect } from "next/navigation";
 
-export default function AdminJobSourcesPage() {
-  return <JobSourcesAdminScreen />;
+export default function LegacyDashboardAdminJobSourcesPage() {
+  redirect("/admin/job-sources");
 }
