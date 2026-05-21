@@ -16,6 +16,7 @@ export interface User {
   email: string;
   createdAt: string;
   updatedAt?: string;
+  avatarUrl?: string | null;
 }
 
 export interface AuthTokens {

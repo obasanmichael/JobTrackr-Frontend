@@ -3,10 +3,10 @@
 import { useTheme } from "next-themes";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { useMounted } from "@/hooks/useMounted";
+import { ProfileSettingsCard } from "@/components/settings/profile-settings-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { LogOut, User, Palette, Sun, Moon, Monitor } from "lucide-react";
+import { LogOut, Palette, Sun, Moon, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ThemeOption = { value: string; label: string; icon: React.ElementType };
@@ -18,7 +18,7 @@ const THEME_OPTIONS: ThemeOption[] = [
 ];
 
 export default function SettingsPage() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const mounted = useMounted();
 
@@ -30,29 +30,8 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-4">
-        {/* Profile */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              Profile
-            </CardTitle>
-            <CardDescription>Your account information.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-[120px_1fr] items-center gap-2 text-sm">
-              <span className="text-muted-foreground">Name</span>
-              <span className="font-medium">{user?.name ?? "—"}</span>
-            </div>
-            <Separator />
-            <div className="grid grid-cols-[120px_1fr] items-center gap-2 text-sm">
-              <span className="text-muted-foreground">Email</span>
-              <span className="font-medium">{user?.email ?? "—"}</span>
-            </div>
-          </CardContent>
-        </Card>
+        <ProfileSettingsCard />
 
-        {/* Appearance */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
@@ -90,7 +69,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Session */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">

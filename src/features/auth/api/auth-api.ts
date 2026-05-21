@@ -1,24 +1,7 @@
 import type { LoginPayload, User } from "@/types";
 import { api } from "@/shared/lib/http-client";
 import type { AuthResponse, RegisterRequestBody } from "../types";
-
-function normalizeUser(raw: User & { updatedAt?: string }): User {
-  return {
-    id: raw.id,
-    name: raw.name,
-    email: raw.email,
-    createdAt:
-      typeof raw.createdAt === "string"
-        ? raw.createdAt
-        : String(raw.createdAt),
-    updatedAt:
-      raw.updatedAt !== undefined
-        ? typeof raw.updatedAt === "string"
-          ? raw.updatedAt
-          : String(raw.updatedAt)
-        : undefined,
-  };
-}
+import { normalizeUser } from "@/features/users/api/users-api";
 
 export async function loginRequest(
   payload: LoginPayload

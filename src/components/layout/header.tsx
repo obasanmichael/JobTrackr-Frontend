@@ -2,6 +2,7 @@
 
 import { LogOut, ChevronDown, Menu } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/use-auth";
+import { UserAvatar } from "@/components/user/user-avatar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -24,10 +25,6 @@ export function Header({ onMenuClick }: HeaderProps) {
     document.addEventListener("mousedown", onOutsideClick);
     return () => document.removeEventListener("mousedown", onOutsideClick);
   }, []);
-
-  const initials = user?.name
-    ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
-    : "?";
 
   return (
     <header className="flex h-[57px] shrink-0 items-center justify-between gap-3 border-b border-border bg-background px-4 sm:px-5">
@@ -55,9 +52,11 @@ export function Header({ onMenuClick }: HeaderProps) {
               menuOpen && "bg-accent"
             )}
           >
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-              {initials}
-            </div>
+            <UserAvatar
+              name={user?.name}
+              avatarUrl={user?.avatarUrl}
+              size="sm"
+            />
             <span className="hidden max-w-[120px] truncate text-[13px] font-medium text-foreground sm:block">
               {user?.name ?? "Account"}
             </span>
