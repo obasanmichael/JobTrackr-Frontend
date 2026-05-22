@@ -13,6 +13,7 @@ import {
   Search,
   Sparkles,
   FileText,
+  BellRing,
   Calendar,
   CreditCard,
   Settings,
@@ -69,6 +70,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "Account",
     items: [
       { label: "Calendar", href: "/dashboard/calendar", icon: Calendar },
+      { label: "Notifications", href: "/dashboard/notifications", icon: BellRing },
       { label: "Billing", href: "/dashboard/billing", icon: CreditCard },
       { label: "Settings", href: "/dashboard/settings", icon: Settings },
     ],

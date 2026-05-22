@@ -4,6 +4,7 @@ import { LogOut, ChevronDown, Menu } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +43,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
       {/* Right, theme toggle + user menu */}
       <div className="flex items-center gap-1">
+        <NotificationBell />
         <ThemeToggle />
 
         <div className="relative ml-1" ref={menuRef}>
