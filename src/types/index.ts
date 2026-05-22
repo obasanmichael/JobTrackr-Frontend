@@ -18,6 +18,7 @@ export interface User {
   updatedAt?: string;
   avatarUrl?: string | null;
   timezone?: string | null;
+  themePreference?: "system" | "light" | "dark";
 }
 
 export interface AuthTokens {

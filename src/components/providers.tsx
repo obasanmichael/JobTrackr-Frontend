@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import { useState } from "react";
 import { AuthProvider } from "@/features/auth";
+import { ThemeSync } from "@/features/auth/components/theme-sync";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -27,7 +28,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
       disableTransitionOnChange
     >
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ThemeSync />
+          {children}
+        </AuthProvider>
         <Toaster
           position="bottom-right"
           toastOptions={{

@@ -18,12 +18,14 @@ function normalizeUser(raw: User & { updatedAt?: string }): User {
         : undefined,
     avatarUrl: raw.avatarUrl ?? null,
     timezone: raw.timezone ?? null,
+    themePreference: raw.themePreference ?? "system",
   };
 }
 
 export async function updateUserProfileRequest(payload: {
   name?: string;
   timezone?: string | null;
+  themePreference?: "system" | "light" | "dark" | null;
 }): Promise<User> {
   const { data } = await api.patch<User>("/users/me", payload);
   return normalizeUser(data);
