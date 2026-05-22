@@ -159,7 +159,7 @@ function InterviewFormPanel({ existing, onClose }: InterviewFormPanelProps) {
                 <SelectContent>
                   {applications.map((a) => (
                     <SelectItem key={a.id} value={a.id} className="text-[13px]">
-                      {a.company} — {a.jobTitle}
+                      {a.company}, {a.jobTitle}
                     </SelectItem>
                   ))}
                 </SelectContent>

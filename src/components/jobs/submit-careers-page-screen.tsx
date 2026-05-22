@@ -46,7 +46,7 @@ function SubmissionSuccessCard(props: {
         <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
         <div className="space-y-2">
           <p className="text-sm font-semibold text-foreground">
-            Thanks — your submission is in review
+            Thanks, your submission is in review
           </p>
           <p className="text-sm text-muted-foreground">
             We received <strong>{submission.companyName}</strong> and will queue

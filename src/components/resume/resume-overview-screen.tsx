@@ -348,7 +348,7 @@ export function ResumeOverviewScreen() {
           <div>
             <h3 className="text-sm font-semibold text-foreground">Your resumes</h3>
             <p className="text-sm text-muted-foreground">
-              Current library — excludes archived files. Parse state and profile edits stay with each
+              Current library excludes archived files. Parse state and profile edits stay with each
               version.
             </p>
           </div>

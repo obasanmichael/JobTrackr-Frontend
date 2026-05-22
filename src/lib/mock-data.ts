@@ -141,7 +141,7 @@ export const MOCK_TIMELINE_EVENTS: TimelineEvent[] = [
     id: "ev-2",
     applicationId: "app-1",
     type: "Note",
-    content: "Spoke with Sarah (recruiter). Loop interviews will be 4 rounds — system design, coding, behavioural, and culture fit.",
+    content: "Spoke with Sarah (recruiter). Loop interviews will be 4 rounds, system design, coding, behavioural, and culture fit.",
     createdAt: "2026-05-09T10:00:00Z",
   },
   {
@@ -190,7 +190,7 @@ export const MOCK_TIMELINE_EVENTS: TimelineEvent[] = [
     id: "ev-9",
     applicationId: "app-7",
     type: "Note",
-    content: "Panel interview confirmed for next Tuesday at 2pm UTC. 3 panellists — Head of Eng, 2 senior engineers.",
+    content: "Panel interview confirmed for next Tuesday at 2pm UTC. 3 panellists, Head of Eng, 2 senior engineers.",
     createdAt: "2026-05-11T14:05:00Z",
   },
 ];
@@ -226,7 +226,7 @@ export const MOCK_REMINDERS: Reminder[] = [
     applicationId: "app-2",
     application: { id: "app-2", jobTitle: "Staff Software Engineer", company: "Linear" },
     title: "Chase Linear application",
-    description: "No response in 2 weeks — send a polite follow-up",
+    description: "No response in 2 weeks, send a polite follow-up",
     dueDate: "2026-05-17T10:00:00Z",
     completed: false,
     createdAt: "2026-05-05T08:00:00Z",

@@ -35,19 +35,19 @@ export async function getResume(id: string): Promise<Resume> {
   return resumeFromApi(data);
 }
 
-/** POST `/resumes/:id/set-active` — only one active resume per user. */
+/** POST `/resumes/:id/set-active`, only one active resume per user. */
 export async function postResumeSetActive(id: string): Promise<Resume> {
   const { data } = await api.post<ResumeApiRecord>(`/resumes/${id}/set-active`);
   return resumeFromApi(data);
 }
 
-/** POST `/resumes/:id/unarchive` — restore an archived resume to PARSED/FAILED/UPLOADED. */
+/** POST `/resumes/:id/unarchive`, restore an archived resume to PARSED/FAILED/UPLOADED. */
 export async function postResumeUnarchive(id: string): Promise<Resume> {
   const { data } = await api.post<ResumeApiRecord>(`/resumes/${id}/unarchive`);
   return resumeFromApi(data);
 }
 
-/** PATCH `/resumes/:id` — e.g. `{ status: "ARCHIVED" }` or `{ isActive: false }`. */
+/** PATCH `/resumes/:id`, e.g. `{ status: "ARCHIVED" }` or `{ isActive: false }`. */
 export async function updateResume(id: string, payload: UpdateResumePayload): Promise<Resume> {
   const { data } = await api.patch<ResumeApiRecord>(`/resumes/${id}`, payload);
   return resumeFromApi(data);
@@ -73,7 +73,7 @@ export async function updateCandidateProfile(
   return candidateProfileFromApi(data);
 }
 
-/** Multipart upload — uses `fetch` so the client sets the multipart boundary correctly. */
+/** Multipart upload, uses `fetch` so the client sets the multipart boundary correctly. */
 export async function uploadResumeFile(file: File): Promise<Resume> {
   const url = `${getPublicApiBaseUrl()}/resumes/upload`;
   const token =

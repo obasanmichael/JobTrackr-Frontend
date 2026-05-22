@@ -60,7 +60,7 @@ function RegisterPageContent() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      {/* Left panel — branding */}
+      {/* Left panel, branding */}
       <div className="hidden lg:flex flex-col justify-between bg-sidebar p-10">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary/20">
@@ -81,13 +81,13 @@ function RegisterPageContent() {
               Your personal job search CRM
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-sidebar-foreground">
-              Track applications, interviews, follow-ups, and outcomes — all in one organised dashboard.
+              Track applications, interviews, follow-ups, and outcomes, all in one organised dashboard.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Right panel — form */}
+      {/* Right panel, form */}
       <div className="flex flex-col items-center justify-center bg-background px-8 py-12">
         <div className="mb-8 flex items-center gap-2 lg:hidden">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">

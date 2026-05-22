@@ -162,7 +162,7 @@ function CreateReminderForm({ onClose }: CreateReminderFormProps) {
                 <SelectContent>
                   {applications.map((a) => (
                     <SelectItem key={a.id} value={a.id} className="text-[13px]">
-                      {a.company} — {a.jobTitle}
+                      {a.company}, {a.jobTitle}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -318,7 +318,7 @@ function ReminderRow({ reminder }: { reminder: Reminder }) {
         </div>
       </div>
 
-      {/* Actions — show on hover */}
+      {/* Actions, show on hover */}
       <div className="mt-0.5 flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
         <button
           onClick={() => setEditing(true)}

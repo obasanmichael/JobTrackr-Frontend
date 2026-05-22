@@ -28,7 +28,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
   return (
     <header className="flex h-[57px] shrink-0 items-center justify-between gap-3 border-b border-border bg-background px-4 sm:px-5">
-      {/* Left — hamburger (mobile only) */}
+      {/* Left, hamburger (mobile only) */}
       <button
         onClick={onMenuClick}
         className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground lg:hidden"
@@ -40,7 +40,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       {/* Spacer so right side stays right-aligned on desktop (where hamburger is hidden) */}
       <div className="hidden lg:block" />
 
-      {/* Right — theme toggle + user menu */}
+      {/* Right, theme toggle + user menu */}
       <div className="flex items-center gap-1">
         <ThemeToggle />
 

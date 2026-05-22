@@ -194,7 +194,7 @@ export function BillingScreen() {
       toast.success("Subscription updated. Your plan may take a moment to refresh.");
       void queryClient.invalidateQueries({ queryKey: ["billing", "me"] });
     } else if (checkout === "cancel") {
-      toast.message("Checkout cancelled — no changes were made.");
+      toast.message("Checkout cancelled, no changes were made.");
     }
 
     router.replace("/dashboard/billing");
@@ -287,7 +287,7 @@ export function BillingScreen() {
               <p className="text-sm font-medium text-foreground">Free during beta</p>
               <p className="text-sm text-muted-foreground">
                 JobTrackr is free while we&apos;re in beta. You have full access to current
-                features — no payment required. Paid plans below will be available when billing
+                features, no payment required. Paid plans below will be available when billing
                 opens.
               </p>
             </div>

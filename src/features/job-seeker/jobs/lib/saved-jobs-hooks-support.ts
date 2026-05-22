@@ -4,7 +4,7 @@ import {
   saveJob,
 } from "@/features/job-seeker/jobs/api/saved-jobs-api";
 
-/** Legacy localStorage key — see `saved-jobs-migration.ts`. */
+/** Legacy localStorage key, see `saved-jobs-migration.ts`. */
 export const LEGACY_SAVED_JOB_IDS_KEY = "jobtrackr:saved-job-ids";
 
 const MIGRATION_FLAG_KEY = "jobtrackr:saved-jobs-migrated-to-api-v1";
@@ -49,7 +49,7 @@ export async function migrateLegacySavedJobIdsOnce(): Promise<void> {
       try {
         await saveJob(externalJobId);
       } catch {
-        /* stale id or network — skip */
+        /* stale id or network, skip */
       }
     }),
   );
@@ -57,7 +57,7 @@ export async function migrateLegacySavedJobIdsOnce(): Promise<void> {
   localStorage.setItem(MIGRATION_FLAG_KEY, "1");
 }
 
-/** Query key for TanStack — bookmarks used for board + detail saved state. */
+/** Query key for TanStack, bookmarks used for board + detail saved state. */
 export function savedJobsBookmarksQueryKey(): readonly string[] {
   return ["saved-jobs", "bookmarks", "v1"] as const;
 }

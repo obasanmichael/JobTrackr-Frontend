@@ -219,7 +219,7 @@ export interface CandidateProfile {
   updatedAt: string;
 }
 
-/** PATCH `/resumes/:id` — backend allows `ARCHIVED` only when updating status. */
+/** PATCH `/resumes/:id`, backend allows `ARCHIVED` only when updating status. */
 export interface UpdateResumePayload {
   isActive?: boolean;
   status?: Extract<ResumeParseStatus, "ARCHIVED">;

@@ -102,7 +102,7 @@ function InlineReminderForm({
       });
       await addEvent(applicationId, {
         type: "Reminder Created",
-        content: `Reminder set: "${reminder.title}" — due ${format(parseISO(reminder.dueDate), "MMM d, yyyy")}`,
+        content: `Reminder set: "${reminder.title}", due ${format(parseISO(reminder.dueDate), "MMM d, yyyy")}`,
       });
       toast.success("Reminder created");
       onClose();
@@ -412,7 +412,7 @@ export function ApplicationDetail({ id }: ApplicationDetailProps) {
 
       {/* Main content: 3/5 + 2/5 */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
-        {/* Left — notes + timeline */}
+        {/* Left, notes + timeline */}
         <div className="space-y-5 lg:col-span-3">
           {application.notes && (
             <Card>
