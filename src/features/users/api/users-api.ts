@@ -17,11 +17,13 @@ function normalizeUser(raw: User & { updatedAt?: string }): User {
           : String(raw.updatedAt)
         : undefined,
     avatarUrl: raw.avatarUrl ?? null,
+    timezone: raw.timezone ?? null,
   };
 }
 
 export async function updateUserProfileRequest(payload: {
-  name: string;
+  name?: string;
+  timezone?: string | null;
 }): Promise<User> {
   const { data } = await api.patch<User>("/users/me", payload);
   return normalizeUser(data);

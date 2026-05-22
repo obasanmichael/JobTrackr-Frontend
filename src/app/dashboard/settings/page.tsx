@@ -5,6 +5,8 @@ import { useAuth } from "@/features/auth/hooks/use-auth";
 import { useMounted } from "@/hooks/useMounted";
 import { ProfileSettingsCard } from "@/components/settings/profile-settings-card";
 import { SecuritySettingsCard } from "@/components/settings/security-settings-card";
+import { NotificationsSettingsCard } from "@/components/settings/notifications-settings-card";
+import { TimezoneSettingsCard } from "@/components/settings/timezone-settings-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { LogOut, Palette, Sun, Moon, Monitor } from "lucide-react";
@@ -34,6 +36,10 @@ export default function SettingsPage() {
         <ProfileSettingsCard />
 
         <SecuritySettingsCard />
+
+        <NotificationsSettingsCard />
+
+        <TimezoneSettingsCard />
 
         <Card>
           <CardHeader>
