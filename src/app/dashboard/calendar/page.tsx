@@ -1,19 +1,20 @@
-import { PageHeader } from "@/components/ui/page-header";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Calendar } from "lucide-react";
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
+import { CalendarSettingsScreen } from "@/components/calendar/calendar-settings-screen";
 
-export default function CalendarSettingsPlaceholderPage() {
+function CalendarLoadingFallback() {
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Calendar"
-        description="Google Calendar OAuth and selective sync ships in Phase V2E alongside interview exports."
-      />
-      <EmptyState
-        icon={Calendar}
-        title="Calendar integration coming soon"
-        description="You'll connect Google Calendar from here once the OAuth flow endpoints are deployed."
-      />
+    <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground">
+      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      Loading calendar…
     </div>
+  );
+}
+
+export default function CalendarPage() {
+  return (
+    <Suspense fallback={<CalendarLoadingFallback />}>
+      <CalendarSettingsScreen />
+    </Suspense>
   );
 }
