@@ -29,6 +29,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useApplicationStore } from "@/hooks/useApplicationStore";
 import { getApiErrorMessage } from "@/shared/lib/api-errors";
+import { datetimeLocalInputToIso, formatIsoDateTimeLabel } from "@/shared/lib/datetime-local";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -166,7 +167,7 @@ function InlineInterviewForm({
     const data = rawData as QuickInterviewForm;
     setSubmitting(true);
     try {
-      const scheduledAt = new Date(data.scheduledAt).toISOString();
+      const scheduledAt = datetimeLocalInputToIso(data.scheduledAt);
       await createInterview({
         applicationId,
         stage: data.stage,
@@ -175,7 +176,7 @@ function InlineInterviewForm({
       });
       await addEvent(applicationId, {
         type: "Interview Update",
-        content: `Interview logged: ${data.stage} (${data.type}) on ${format(new Date(data.scheduledAt), "MMM d, h:mm a")}`,
+        content: `Interview logged: ${data.stage} (${data.type}) on ${formatIsoDateTimeLabel(scheduledAt, "MMM d, h:mm a")}`,
       });
       toast.success("Interview logged");
       onClose();
@@ -541,7 +542,7 @@ export function ApplicationDetail({ id }: ApplicationDetailProps) {
                       <div>
                         <p className="text-[13px] font-medium">{iv.stage}</p>
                         <p className="text-[11px] text-muted-foreground">
-                          {iv.type}{iv.scheduledAt && ` · ${format(parseISO(iv.scheduledAt), "MMM d, h:mm a")}`}
+                          {iv.type}{iv.scheduledAt && ` · ${formatIsoDateTimeLabel(iv.scheduledAt, "MMM d, h:mm a")}`}
                         </p>
                       </div>
                     </li>

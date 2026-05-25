@@ -21,6 +21,7 @@ import { format, parseISO, isToday, isTomorrow, isPast, isThisWeek } from "date-
 import { toast } from "sonner";
 import { useApplicationStore } from "@/hooks/useApplicationStore";
 import { getApiErrorMessage } from "@/shared/lib/api-errors";
+import { datetimeLocalInputToIso, isoToDatetimeLocalInput } from "@/shared/lib/datetime-local";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -106,7 +107,7 @@ function CreateReminderForm({ onClose }: CreateReminderFormProps) {
       await createReminder({
         title: data.title,
         description: data.description,
-        dueDate: new Date(data.dueDate).toISOString(),
+        dueDate: datetimeLocalInputToIso(data.dueDate),
         applicationId: data.applicationId,
       });
       toast.success("Reminder created");
@@ -206,7 +207,7 @@ function ReminderRow({ reminder }: { reminder: Reminder }) {
     defaultValues: {
       title: reminder.title,
       description: reminder.description ?? "",
-      dueDate: format(parseISO(reminder.dueDate), "yyyy-MM-dd'T'HH:mm"),
+      dueDate: isoToDatetimeLocalInput(reminder.dueDate),
     },
   });
 
@@ -216,7 +217,7 @@ function ReminderRow({ reminder }: { reminder: Reminder }) {
       await updateReminder(reminder.id, {
         title: data.title,
         description: data.description,
-        dueDate: new Date(data.dueDate).toISOString(),
+        dueDate: datetimeLocalInputToIso(data.dueDate),
       });
       toast.success("Reminder updated");
       setEditing(false);

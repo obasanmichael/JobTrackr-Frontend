@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Link from "next/link";
@@ -18,10 +18,15 @@ import {
   ChevronUp,
   ExternalLink,
 } from "lucide-react";
-import { format, parseISO, isFuture, isToday } from "date-fns";
+import { parseISO, isFuture, isToday } from "date-fns";
 import { toast } from "sonner";
 import { useApplicationStore } from "@/hooks/useApplicationStore";
 import { getApiErrorMessage } from "@/shared/lib/api-errors";
+import {
+  datetimeLocalInputToIso,
+  formatIsoDateTimeLabel,
+  isoToDatetimeLocalInput,
+} from "@/shared/lib/datetime-local";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,7 +87,11 @@ function InterviewFormPanel({ existing, onClose }: InterviewFormPanelProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEdit = Boolean(existing);
 
-  const { register, handleSubmit, setValue, watch, formState: { errors } } =
+  const scheduledAtLocal = existing?.scheduledAt
+    ? isoToDatetimeLocalInput(existing.scheduledAt)
+    : "";
+
+  const { register, handleSubmit, setValue, watch, control, formState: { errors } } =
     useForm<InterviewForm>({
       resolver: zodResolver(interviewSchema),
       defaultValues: existing
@@ -90,7 +99,7 @@ function InterviewFormPanel({ existing, onClose }: InterviewFormPanelProps) {
             applicationId: existing.applicationId,
             stage: existing.stage,
             type: existing.type,
-            scheduledAt: existing.scheduledAt ? existing.scheduledAt.slice(0, 16) : "",
+            scheduledAt: scheduledAtLocal,
             location: existing.location ?? "",
             notes: existing.notes ?? "",
             outcome: existing.outcome ?? "",
@@ -102,7 +111,7 @@ function InterviewFormPanel({ existing, onClose }: InterviewFormPanelProps) {
     const data = rawData as InterviewForm;
     setIsSubmitting(true);
     try {
-      const scheduledAt = new Date(data.scheduledAt).toISOString();
+      const scheduledAt = datetimeLocalInputToIso(data.scheduledAt);
 
       if (isEdit && existing) {
         await updateInterview(existing.id, {
@@ -203,7 +212,21 @@ function InterviewFormPanel({ existing, onClose }: InterviewFormPanelProps) {
           <div className="grid gap-3.5 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-[13px]">Date &amp; time <span className="text-destructive">*</span></Label>
-              <Input type="datetime-local" className="text-[13px]" {...register("scheduledAt")} />
+              <Controller
+                name="scheduledAt"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    type="datetime-local"
+                    className="text-[13px]"
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                  />
+                )}
+              />
               {errors.scheduledAt && <p className="text-xs text-destructive">{errors.scheduledAt.message}</p>}
             </div>
             <div className="space-y-1.5">
@@ -260,7 +283,13 @@ function InterviewCard({ interview }: { interview: Interview }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   if (editing) {
-    return <InterviewFormPanel existing={interview} onClose={() => setEditing(false)} />;
+    return (
+      <InterviewFormPanel
+        key={interview.id}
+        existing={interview}
+        onClose={() => setEditing(false)}
+      />
+    );
   }
 
   const isUpcoming = interview.scheduledAt
@@ -321,7 +350,7 @@ function InterviewCard({ interview }: { interview: Interview }) {
                   isUpcoming && "text-primary font-medium"
                 )}>
                   <Clock className="h-3 w-3" />
-                  {format(parseISO(interview.scheduledAt), "MMM d, yyyy · h:mm a")}
+                  {formatIsoDateTimeLabel(interview.scheduledAt)}
                 </span>
               )}
               {interview.location && (
