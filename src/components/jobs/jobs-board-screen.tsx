@@ -38,6 +38,7 @@ import {
   toggleSavedJobBookmark,
   type SavedBookmarkRow,
 } from "@/features/job-seeker/jobs/lib/saved-jobs-hooks-support";
+import { SuggestedJobsSection } from "@/components/jobs/suggested-jobs-section";
 import type { JobBoardListing } from "@/types";
 
 function JobCard({
@@ -243,6 +244,8 @@ export function JobsBoardScreen() {
           </Button>
         }
       />
+
+      <SuggestedJobsSection />
 
       <Card className="space-y-4 border-border/80 p-5">
         <div className="grid gap-4 md:grid-cols-12">
