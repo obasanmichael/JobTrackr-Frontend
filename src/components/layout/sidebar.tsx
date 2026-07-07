@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import {
   Building2,
   BriefcaseBusiness,
+  Bookmark,
   LayoutDashboard,
   Briefcase,
   Bell,
@@ -44,14 +45,19 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "Jobs", href: "/dashboard/jobs", icon: Search },
       {
-        label: "Submit careers page",
-        href: "/dashboard/jobs/submit",
-        icon: Building2,
-      },
-      {
         label: "Matched Jobs",
         href: "/dashboard/matches",
         icon: Target,
+      },
+      {
+        label: "Saved jobs",
+        href: "/dashboard/saved-jobs",
+        icon: Bookmark,
+      },
+      {
+        label: "Submit careers page",
+        href: "/dashboard/jobs/submit",
+        icon: Building2,
       },
     ],
   },
