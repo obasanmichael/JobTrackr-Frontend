@@ -62,12 +62,30 @@ export function savedJobsBookmarksQueryKey(): readonly string[] {
   return ["saved-jobs", "bookmarks", "v1"] as const;
 }
 
+/** Backend caps `limit` at 50 (SavedJobsQueryDto); page until exhausted. */
 export async function fetchSavedJobsBookmarks() {
-  return listSavedJobs({
+  const PAGE_LIMIT = 50;
+  const MAX_PAGES = 10;
+  const first = await listSavedJobs({
     page: 1,
-    limit: 500,
+    limit: PAGE_LIMIT,
     includeConverted: true,
   });
+  const items = [...first.items];
+  let page = 1;
+  while (items.length < first.total && page < MAX_PAGES) {
+    page += 1;
+    const next = await listSavedJobs({
+      page,
+      limit: PAGE_LIMIT,
+      includeConverted: true,
+    });
+    if (next.items.length === 0) {
+      break;
+    }
+    items.push(...next.items);
+  }
+  return { ...first, items };
 }
 
 export type SavedBookmarkRow = Awaited<ReturnType<typeof fetchSavedJobsBookmarks>>["items"][number];
