@@ -6,6 +6,17 @@ import { useApplicationStore } from "@/hooks/useApplicationStore";
 import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
 import type { DashboardSummary } from "@/types";
 
+const EMPTY_SUMMARY: DashboardSummary = {
+  totalApplications: 0,
+  activeApplications: 0,
+  offerCount: 0,
+  rejectionCount: 0,
+  byStatus: {},
+  upcomingReminders: [],
+  upcomingInterviews: [],
+  recentEvents: [],
+};
+
 export default function DashboardPage() {
   const { applications, refreshApplications } = useApplicationStore();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -16,17 +27,23 @@ export default function DashboardPage() {
 
   useEffect(() => {
     let cancelled = false;
-    void getDashboardSummary().then((s) => {
-      if (!cancelled) setSummary(s);
-    });
+    void getDashboardSummary()
+      .then((s) => {
+        if (!cancelled) setSummary(s);
+      })
+      .catch(() => {
+        if (!cancelled) setSummary(EMPTY_SUMMARY);
+      });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  if (!summary) {
-    return null;
-  }
-
-  return <DashboardOverview summary={summary} applications={applications} />;
+  return (
+    <DashboardOverview
+      summary={summary ?? undefined}
+      applications={applications}
+      isLoading={!summary}
+    />
+  );
 }

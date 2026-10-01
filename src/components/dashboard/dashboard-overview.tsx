@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { format, parseISO, isToday, isTomorrow } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardSkeleton } from "./dashboard-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import dynamic from "next/dynamic";
@@ -94,31 +94,6 @@ const EVENT_ICONS: Record<string, React.ElementType> = {
   "Interview Update": CalendarCheck,
   "General Update": FileText,
 };
-
-/* ─── Skeleton ───────────────────────────────────────────────────────────── */
-
-function DashboardSkeleton() {
-  return (
-    <div className="space-y-6 animate-pulse">
-      <div className="space-y-1">
-        <Skeleton className="h-6 w-44" />
-        <Skeleton className="h-4 w-64" />
-      </div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i}><CardContent className="p-5 space-y-3">
-            <Skeleton className="h-3 w-20" />
-            <Skeleton className="h-8 w-14" />
-          </CardContent></Card>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card><CardContent className="p-5"><Skeleton className="h-40" /></CardContent></Card>
-        <Card><CardContent className="p-5"><Skeleton className="h-40" /></CardContent></Card>
-      </div>
-    </div>
-  );
-}
 
 /* ─── Main ───────────────────────────────────────────────────────────────── */
 

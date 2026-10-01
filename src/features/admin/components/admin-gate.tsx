@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { AppShellSkeleton } from "@/components/layout/app-shell-skeleton";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { probeAdminAccess } from "@/features/admin/lib/admin-access";
 import { isAdminUser } from "@/shared/config/admin";
@@ -37,12 +37,7 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
 
   if (!ready || !user) {
     return (
-      <div className="flex min-h-[50vh] w-full items-center justify-center bg-background">
-        <Loader2
-          className="h-8 w-8 animate-spin text-muted-foreground"
-          aria-label="Loading"
-        />
-      </div>
+      <AppShellSkeleton />
     );
   }
 
@@ -52,12 +47,7 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
 
   if (q.isPending) {
     return (
-      <div className="flex min-h-[50vh] w-full items-center justify-center bg-background">
-        <Loader2
-          className="h-8 w-8 animate-spin text-muted-foreground"
-          aria-label="Checking admin access"
-        />
-      </div>
+      <AppShellSkeleton />
     );
   }
 
