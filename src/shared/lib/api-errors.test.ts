@@ -61,3 +61,35 @@ describe("getApiErrorMessage", () => {
     );
   });
 });
+
+describe("toFriendlyErrorMessage", () => {
+  it("hides provider details behind a plain-language message", async () => {
+    const { toFriendlyErrorMessage } = await import("./api-errors");
+    const out = toFriendlyErrorMessage(
+      "OpenAI error HTTP 429: You have no credits remaining."
+    );
+    expect(out).not.toMatch(/429|OpenAI/);
+    expect(out).toMatch(/temporarily unavailable/);
+  });
+});
+
+describe("getApiErrorMessage status fallbacks", () => {
+  const make = (status: number, data: unknown) => {
+    const err = new axios.AxiosError("x");
+    err.response = { status, data, statusText: "", headers: {}, config: {} as never };
+    return err;
+  };
+  it("keeps the server message for 502 (backend sends friendly copy)", () => {
+    expect(getApiErrorMessage(make(502, { message: "Ingest source unreachable" }))).toBe(
+      "Ingest source unreachable"
+    );
+  });
+  it("uses a generic unavailable message for bodyless 503", () => {
+    expect(getApiErrorMessage(make(503, {}))).toMatch(/temporarily unavailable/);
+  });
+  it("maps bodyless 429/409/422 to readable copy", () => {
+    for (const s of [429, 409, 422]) {
+      expect(getApiErrorMessage(make(s, {}))).not.toMatch(/\d{3}/);
+    }
+  });
+});

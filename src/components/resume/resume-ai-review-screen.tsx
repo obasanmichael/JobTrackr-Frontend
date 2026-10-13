@@ -7,6 +7,7 @@ import { format, parseISO } from "date-fns";
 import {
   AlertCircle,
   ClipboardList,
+  ChevronDown,
   History,
   Layers,
   Loader2,
@@ -36,7 +37,7 @@ import {
   listResumeReviews,
 } from "@/features/job-seeker/resume-reviews/api/resume-reviews-api";
 import { listResumes } from "@/features/job-seeker/resume/api/resumes-api";
-import { getApiErrorMessage } from "@/shared/lib/api-errors";
+import { getApiErrorMessage, toFriendlyErrorMessage } from "@/shared/lib/api-errors";
 import type { ResumeReview, ResumeReviewStatus, ResumeReviewSuggestion, Resume } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -262,7 +263,7 @@ function HistoryCard({
           {review.status === "FAILED" && review.errorMessage && (
             <p className="flex items-start gap-1.5 text-xs text-destructive">
               <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-              {review.errorMessage}
+              {toFriendlyErrorMessage(review.errorMessage)}
             </p>
           )}
         </div>
@@ -288,6 +289,7 @@ export function ResumeAiReviewScreen() {
   const [pickedResumeId, setPickedResumeId] = useState<string | null>(null);
   const [applicationId, setApplicationId] = useState<string>("");
   const [jobDescription, setJobDescription] = useState("");
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [pendingKind, setPendingKind] = useState<"GENERAL" | "JOB_SPECIFIC" | null>(null);
 
   const resumesQuery = useQuery({
@@ -558,10 +560,27 @@ export function ResumeAiReviewScreen() {
       )}
 
       <section className="space-y-3">
-        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+        <button
+          type="button"
+          onClick={() => setHistoryOpen((o) => !o)}
+          aria-expanded={historyOpen}
+          aria-controls="review-history-panel"
+          className="flex w-full items-center gap-2 text-sm font-semibold text-foreground"
+        >
           <History className="h-4 w-4 text-muted-foreground" />
           Review history
-        </div>
+          {reviewsQuery.data && (
+            <span className="font-normal text-muted-foreground">({reviewsQuery.data.total})</span>
+          )}
+          <ChevronDown
+            className={cn(
+              "ml-auto h-4 w-4 text-muted-foreground transition-transform",
+              historyOpen && "rotate-180"
+            )}
+          />
+        </button>
+        {historyOpen && (
+          <div id="review-history-panel" className="space-y-3">
         <p className="text-xs text-muted-foreground max-w-2xl">
           Showing runs for the resume selected above. Open an entry to view scores and suggestions.
         </p>
@@ -599,6 +618,8 @@ export function ResumeAiReviewScreen() {
           <p className="text-xs text-muted-foreground">
             Showing {reviewsQuery.data.items.length} of {reviewsQuery.data.total} matching reviews.
           </p>
+        )}
+          </div>
         )}
       </section>
     </div>
