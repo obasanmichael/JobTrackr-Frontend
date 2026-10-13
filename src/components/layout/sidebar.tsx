@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import {
   Building2,
-  BriefcaseBusiness,
   Bookmark,
   LayoutDashboard,
   Briefcase,
@@ -25,6 +24,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAdminNavEligible } from "@/features/admin/hooks/use-admin-nav-eligible";
+import { Logo } from "@/components/ui/logo";
 
 type NavItem = { label: string; href: string; icon: LucideIcon; exact?: boolean };
 
@@ -131,9 +131,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     <aside className="flex h-full w-64 flex-col bg-sidebar lg:w-56">
       <div className="flex h-[57px] shrink-0 items-center justify-between border-b border-sidebar-border px-5">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sidebar-primary/20">
-            <BriefcaseBusiness className="h-[15px] w-[15px] text-sidebar-primary" />
-          </div>
+          <Logo className="h-7 w-7" />
           <span className="text-[13px] font-semibold tracking-tight text-white/90">JobTrackr</span>
         </div>
         <button

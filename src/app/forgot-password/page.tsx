@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { BriefcaseBusiness, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { forgotPasswordRequest } from "@/features/auth/api/auth-api";
 import { getApiErrorMessage } from "@/shared/lib/api-errors";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthFormSkeleton } from "@/components/ui/page-skeletons";
+import { Logo } from "@/components/ui/logo";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -48,9 +49,7 @@ function ForgotPasswordContent() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-8 py-12">
       <div className="mb-8 flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-          <BriefcaseBusiness className="h-4 w-4 text-white" />
-        </div>
+        <Logo className="h-8 w-8" />
         <span className="text-[13px] font-semibold text-foreground">JobTrackr</span>
       </div>
 

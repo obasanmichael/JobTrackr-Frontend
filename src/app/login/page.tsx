@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Loader2, BriefcaseBusiness } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { getApiErrorMessage } from "@/shared/lib/api-errors";
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthFormSkeleton } from "@/components/ui/page-skeletons";
+import { Logo } from "@/components/ui/logo";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -56,9 +57,7 @@ function LoginPageContent() {
       {/* Left panel — branding */}
       <div className="hidden lg:flex flex-col justify-between bg-sidebar p-10">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary/20">
-            <BriefcaseBusiness className="h-4 w-4 text-sidebar-primary" />
-          </div>
+          <Logo className="h-8 w-8" />
           <span className="text-[13px] font-semibold text-white/90">JobTrackr</span>
         </div>
 
@@ -75,9 +74,7 @@ function LoginPageContent() {
       <div className="flex flex-col items-center justify-center bg-background px-8 py-12">
         {/* Mobile logo */}
         <div className="mb-8 flex items-center gap-2 lg:hidden">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <BriefcaseBusiness className="h-4 w-4 text-white" />
-          </div>
+          <Logo className="h-8 w-8" />
           <span className="text-[13px] font-semibold text-foreground">JobTrackr</span>
         </div>
 
