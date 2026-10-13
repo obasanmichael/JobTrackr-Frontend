@@ -24,6 +24,7 @@ import {
 } from "@/features/admin/job-sources/api/admin-job-sources-api";
 import type { JobSourceAdminApi } from "@/features/admin/job-sources/types";
 import { getApiErrorMessage } from "@/shared/lib/api-errors";
+import { CardStackSkeleton } from "@/components/ui/page-skeletons";
 
 function formatWhen(value: string | null): string {
   if (!value) {
@@ -200,12 +201,7 @@ export function JobSourcesAdminScreen() {
   );
 
   if (sourcesQuery.isLoading) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Loading job sources…
-      </div>
-    );
+    return <CardStackSkeleton label="Loading job sources" count={4} headerAction />;
   }
 
   if (sourcesQuery.isError) {

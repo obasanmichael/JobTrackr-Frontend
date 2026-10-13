@@ -21,7 +21,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -41,6 +40,7 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/shared/lib/api-errors";
+import { CalendarGridSkeleton } from "@/components/ui/page-skeletons";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -182,10 +182,7 @@ export function JobTrackrScheduleCalendar() {
   if (feedQuery.isLoading) {
     return (
       <Card>
-        <CardContent className="flex min-h-[280px] items-center justify-center py-10 text-sm text-muted-foreground">
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Loading your schedule…
-        </CardContent>
+        <CalendarGridSkeleton />
       </Card>
     );
   }

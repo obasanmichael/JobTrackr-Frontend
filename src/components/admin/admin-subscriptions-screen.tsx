@@ -16,6 +16,7 @@ import type { AdminSubscriptionRowApi } from "@/features/admin/types";
 import { getApiErrorMessage } from "@/shared/lib/api-errors";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TableRowsSkeleton } from "@/components/ui/page-skeletons";
 
 const SUBSCRIPTION_STATUSES = [
   "BETA",
@@ -182,11 +184,7 @@ export function AdminSubscriptionsScreen() {
             </thead>
             <tbody className="divide-y divide-border">
               {q.isPending ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
-                    <Loader2 className="mx-auto h-6 w-6 animate-spin" />
-                  </td>
-                </tr>
+                <TableRowsSkeleton rows={6} cols={6} />
               ) : q.isError ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-destructive">
@@ -293,8 +291,10 @@ export function AdminSubscriptionsScreen() {
             </DialogDescription>
           </DialogHeader>
           {editing && plansQ.isPending ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <div className="space-y-3 py-2" role="status" aria-busy="true" aria-label="Loading plans">
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-2/3" />
             </div>
           ) : editing && plansQ.isError ? (
             <p className="text-sm text-destructive">Could not load billing plans.</p>

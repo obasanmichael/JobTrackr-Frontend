@@ -7,12 +7,12 @@ import {
   Bookmark,
   BriefcaseBusiness,
   ExternalLink,
-  Loader2,
   MapPin,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
+import { JobCardsSkeleton } from "@/components/ui/page-skeletons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -66,12 +66,7 @@ export function SavedJobsScreen() {
   });
 
   if (savedQuery.isPending) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Loading saved jobs…
-      </div>
-    );
+    return <JobCardsSkeleton label="Loading saved jobs" />;
   }
 
   if (savedQuery.isError) {

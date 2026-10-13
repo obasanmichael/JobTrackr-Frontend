@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useCalendarStatus } from "@/features/calendar/hooks/use-calendar-status";
 import { useBilling } from "@/features/job-seeker/billing/hooks/use-billing";
 import { getApiErrorMessage } from "@/shared/lib/api-errors";
+import { CardStackSkeleton } from "@/components/ui/page-skeletons";
 
 export function CalendarSettingsScreen() {
   const router = useRouter();
@@ -45,12 +46,7 @@ export function CalendarSettingsScreen() {
   }, [queryClient, router, searchParams]);
 
   if (statusQuery.isLoading || billingQuery.isLoading) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Loading calendar…
-      </div>
-    );
+    return <CardStackSkeleton label="Loading calendar" headerAction />;
   }
 
   if (statusQuery.isError) {

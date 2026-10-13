@@ -14,6 +14,7 @@ import { getSafeInternalRedirectPath } from "@/shared/lib/safe-redirect-path";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AuthFormSkeleton } from "@/components/ui/page-skeletons";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -161,11 +162,7 @@ function LoginPageContent() {
 export default function LoginPage() {
   return (
     <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-background">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      }
+      fallback={<AuthFormSkeleton />}
     >
       <LoginPageContent />
     </Suspense>

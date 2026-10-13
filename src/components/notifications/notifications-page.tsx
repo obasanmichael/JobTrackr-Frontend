@@ -14,6 +14,7 @@ import { getApiErrorMessage } from "@/shared/lib/api-errors";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { ListRowsSkeleton } from "@/components/ui/page-skeletons";
 
 function formatWhen(value: string): string {
   try {
@@ -125,10 +126,7 @@ export function NotificationsPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Loading notifications…
-        </div>
+        <ListRowsSkeleton rows={5} label="Loading notifications" />
       ) : error ? (
         <div className="space-y-3">
           <p className="text-sm text-destructive">{getApiErrorMessage(error)}</p>

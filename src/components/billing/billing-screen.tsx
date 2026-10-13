@@ -35,6 +35,7 @@ import {
 } from "@/features/job-seeker/billing/lib/billing-display";
 import type { PlanSummaryApi } from "@/features/job-seeker/billing/types";
 import { getApiErrorMessage } from "@/shared/lib/api-errors";
+import { CardStackSkeleton } from "@/components/ui/page-skeletons";
 
 function formatWhen(value: string | null): string | null {
   if (!value) {
@@ -216,12 +217,7 @@ export function BillingScreen() {
   }
 
   if (billingQuery.isLoading || plansQuery.isLoading) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Loading billing…
-      </div>
-    );
+    return <CardStackSkeleton label="Loading billing" headerAction />;
   }
 
   if (billingQuery.isError) {

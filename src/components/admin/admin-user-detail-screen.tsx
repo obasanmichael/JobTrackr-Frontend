@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/ui/page-header";
+import { DetailSkeleton } from "@/components/ui/page-skeletons";
 
 export function AdminUserDetailScreen({ userId }: { userId: string }) {
   const router = useRouter();
@@ -40,11 +41,7 @@ export function AdminUserDetailScreen({ userId }: { userId: string }) {
   });
 
   if (q.isPending) {
-    return (
-      <div className="flex justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DetailSkeleton label="Loading user" />;
   }
 
   if (q.isError || !q.data) {

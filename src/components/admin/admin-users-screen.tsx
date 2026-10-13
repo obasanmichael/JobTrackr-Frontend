@@ -4,13 +4,15 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { listAdminUsers } from "@/features/admin/api/admin-users-api";
 import type { AdminUserSummaryApi } from "@/features/admin/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
+import { TableRowsSkeleton } from "@/components/ui/page-skeletons";
 
 type SortKey = "name" | "email" | "createdAt";
 type SortDir = "asc" | "desc";
@@ -97,8 +99,21 @@ export function AdminUsersScreen() {
 
       <Card className="overflow-hidden">
         {q.isPending ? (
-          <div className="flex justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="overflow-x-auto" role="status" aria-busy="true" aria-label="Loading users">
+            <table className="w-full min-w-[640px] text-left text-sm">
+              <thead className="border-b border-border bg-muted/40">
+                <tr>
+                  {[...Array(5)].map((_, i) => (
+                    <th key={i} className="px-4 py-3">
+                      <Skeleton className="h-3.5 w-16" />
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                <TableRowsSkeleton rows={8} cols={5} />
+              </tbody>
+            </table>
           </div>
         ) : q.isError ? (
           <p className="p-6 text-sm text-destructive">Failed to load users.</p>

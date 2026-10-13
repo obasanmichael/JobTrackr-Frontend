@@ -6,6 +6,7 @@ import { format, parseISO } from "date-fns";
 import { ExternalLink, Loader2, RefreshCw, Sparkles, Target } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
+import { JobCardsSkeleton } from "@/components/ui/page-skeletons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -35,12 +36,7 @@ export function MatchedJobsScreen() {
   });
 
   if (matchesQuery.isLoading) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Loading matches…
-      </div>
-    );
+    return <JobCardsSkeleton label="Loading matches" headerAction />;
   }
 
   if (matchesQuery.isError) {

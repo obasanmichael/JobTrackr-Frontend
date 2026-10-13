@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { createApplication } from "@/features/job-seeker/applications/api/applications-api";
 import { convertSavedJob } from "@/features/job-seeker/jobs/api/saved-jobs-api";
@@ -34,6 +35,7 @@ import {
   toggleSavedJobBookmark,
 } from "@/features/job-seeker/jobs/lib/saved-jobs-hooks-support";
 import { getApiErrorMessage } from "@/shared/lib/api-errors";
+import { DetailSkeleton } from "@/components/ui/page-skeletons";
 
 function formatLabel(value: string | null | undefined): string | null {
   if (!value?.trim()) {
@@ -133,12 +135,7 @@ export function JobDetailScreen({ jobId }: JobDetailScreenProps) {
   }, [jobQuery.data]);
 
   if (jobQuery.isLoading) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Loading job…
-      </div>
-    );
+    return <DetailSkeleton label="Loading job" />;
   }
 
   if (jobQuery.isError || !jobQuery.data) {
@@ -232,9 +229,10 @@ export function JobDetailScreen({ jobId }: JobDetailScreenProps) {
       </Card>
 
       {matchQuery.isLoading ? (
-        <Card className="border-border/80 p-5 text-sm text-muted-foreground">
-          <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
-          Loading match score…
+        <Card className="space-y-3 border-border/80 p-5" role="status" aria-busy="true" aria-label="Loading match score">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-3.5 w-full" />
+          <Skeleton className="h-3.5 w-2/3" />
         </Card>
       ) : match?.requiresProfile ? (
         <Card className="space-y-3 border-border/80 p-5">

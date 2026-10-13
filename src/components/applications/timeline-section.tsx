@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { TIMELINE_EVENT_TYPES } from "@/lib/constants";
 import type { TimelineEventType } from "@/lib/constants";
 import type { TimelineEvent } from "@/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ICON_MAP: Record<string, React.ElementType> = {
   "Status Change": GitCommitHorizontal,
@@ -155,7 +156,17 @@ export function TimelineSection({ applicationId }: TimelineSectionProps) {
 
       {/* Events list */}
       {loading && events.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">Loading timeline…</p>
+        <div className="space-y-4 py-4" role="status" aria-busy="true" aria-label="Loading timeline">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex gap-3">
+              <Skeleton className="h-6 w-6 shrink-0 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-3.5 w-3/4" />
+                <Skeleton className="h-3 w-1/3" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : events.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">
           No timeline events yet.

@@ -20,6 +20,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function ToggleSwitch({
   checked,
@@ -123,9 +124,10 @@ export function NotificationsSettingsCard() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Loading preferences…
+            <div className="space-y-3" role="status" aria-busy="true" aria-label="Loading preferences">
+              <Skeleton className="h-5 w-full" />
+              <Skeleton className="h-5 w-11/12" />
+              <Skeleton className="h-5 w-3/4" />
             </div>
           ) : null}
         </CardContent>
