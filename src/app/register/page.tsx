@@ -62,7 +62,7 @@ function RegisterPageContent() {
   }
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
+    <div className="grid min-h-screen lg:grid-cols-[3fr_2fr]">
       <AuthShowcase badge="Free during beta" />
 
       {/* Right panel, form */}
