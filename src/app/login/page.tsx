@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthFormSkeleton } from "@/components/ui/page-skeletons";
 import { Logo } from "@/components/ui/logo";
+import { AuthShowcase } from "@/features/auth/components/auth-showcase";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -54,21 +55,7 @@ function LoginPageContent() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      {/* Left panel — branding */}
-      <div className="hidden lg:flex flex-col justify-between bg-sidebar p-10">
-        <div className="flex items-center gap-2.5">
-          <Logo className="h-8 w-8" />
-          <span className="text-[13px] font-semibold text-white/90">JobTrackr</span>
-        </div>
-
-        <div>
-          <blockquote className="space-y-2">
-            <p className="text-lg font-medium leading-relaxed text-white/80">
-              &ldquo;The best job seekers don&apos;t just apply; they track, follow up, and stay organised.&rdquo;
-            </p>
-          </blockquote>
-        </div>
-      </div>
+      <AuthShowcase />
 
       {/* Right panel — form */}
       <div className="flex flex-col items-center justify-center bg-background px-8 py-12">

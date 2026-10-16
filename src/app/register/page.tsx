@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthFormSkeleton } from "@/components/ui/page-skeletons";
 import { Logo } from "@/components/ui/logo";
+import { AuthShowcase } from "@/features/auth/components/auth-showcase";
 
 const registerSchema = z
   .object({
@@ -62,30 +63,7 @@ function RegisterPageContent() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      {/* Left panel, branding */}
-      <div className="hidden lg:flex flex-col justify-between bg-sidebar p-10">
-        <div className="flex items-center gap-2.5">
-          <Logo className="h-8 w-8" />
-          <span className="text-[13px] font-semibold text-white/90">JobTrackr</span>
-        </div>
-
-        <div className="space-y-6">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-2 rounded-full bg-sidebar-accent px-3 py-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
-              <span className="text-xs text-sidebar-foreground">Free during beta</span>
-            </div>
-          </div>
-          <div>
-            <h2 className="text-2xl font-semibold text-white/90 leading-snug">
-              Your personal job search CRM
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-sidebar-foreground">
-              Track applications, interviews, follow-ups, and outcomes, all in one organised dashboard.
-            </p>
-          </div>
-        </div>
-      </div>
+      <AuthShowcase badge="Free during beta" />
 
       {/* Right panel, form */}
       <div className="flex flex-col items-center justify-center bg-background px-8 py-12">
